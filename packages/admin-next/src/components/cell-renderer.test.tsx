@@ -33,4 +33,16 @@ describe("CellRenderer", () => {
     render(<CellRenderer column={col({ format: "color" })} row={{ x: "#ef4444" }} />);
     expect(screen.getByText("#ef4444")).toBeDefined();
   });
+
+  it("renders a linked cell from a link pattern", () => {
+    render(
+      <CellRenderer
+        column={col({ name: "title", link: "/admin/posts/{id}" })}
+        row={{ id: 42, title: "Linked post" }}
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: "Linked post" });
+    expect(link.getAttribute("href")).toBe("/admin/posts/42");
+  });
 });

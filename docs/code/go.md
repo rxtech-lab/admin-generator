@@ -29,6 +29,9 @@ Primary exported types:
 Important constructors and helpers:
 
 - `NewResource[T](cfg, opts...)`: builds a generic CRUD-backed resource.
+- `NewFormResource(cfg)`: builds a form-only / custom-action resource from
+  handler closures (see below).
+- `FormSchemaFromModel`, `SubmitButton`: helpers for building form schemas.
 - `Detail`, `Paginated`, `SearchResults`: build the three action response
   shapes.
 - `ModelToTableColumns`: reflects table columns from struct tags.
@@ -38,6 +41,51 @@ Important constructors and helpers:
 
 Core actions are represented by `ActionType`: `view`, `edit`, `delete`,
 `create`, `search`, and `export`.
+
+### Form-only / custom-action resources (`NewFormResource`)
+
+`NewResource[T]` covers generic CRUD over a `DataSource`. For a settings page,
+single-record configuration, or a bespoke action (e.g. "top up a user's
+balance"), use `NewFormResource`: the host serves a dynamic JSON Schema and owns
+the read/write handlers. The frontend renders the schema with
+react-jsonschema-form, prefills it from `Fetch`, and posts submitted values to
+`Act` — no per-resource frontend code and no protocol change (it reuses
+`ResourceForm` / `FormSchema`).
+
+```go
+reg.Register(admin.NewFormResource(admin.FormResourceConfig{
+    ID:   "app-config",
+    Name: "App Config",
+    Icon: "settings",
+    Authorize: oidc.RequireRole("admin"),
+    Schema: func(ctx context.Context, req admin.Request, _ admin.ActionType) (*admin.FormSchema, error) {
+        // Return Type=ActionEdit so the UI prefills and submits the form.
+        fs, err := admin.FormSchemaFromModel(ConfigForm{}, admin.ActionEdit, "Save",
+            req.BasePath+"/resources/app-config/action?action=edit")
+        if err != nil {
+            return nil, err
+        }
+        // Inject values computed at request time, e.g. a model dropdown.
+        if p, ok := fs.Schema.Properties.Get("default_host_model"); ok {
+            p.Enum = liveModelIDs()
+        }
+        return fs, nil
+    },
+    Fetch: func(ctx context.Context, req admin.Request, _ admin.ActionType, _ map[string]any) (*admin.ActionResponse, error) {
+        return admin.Detail(currentConfig()), nil // prefill
+    },
+    Act: func(ctx context.Context, req admin.Request, _ admin.ActionType, data map[string]any) (*admin.ActionResponse, error) {
+        saveConfig(data)
+        return admin.Detail(data), nil
+    },
+}))
+```
+
+Frontend interaction contract: the admin UI requests the schema for the `view`
+action, so `Schema` is invoked with `ActionView` and must return a `*FormSchema`
+whose `Type` is `ActionEdit`. `Fetch` and `Act` are then invoked with
+`ActionEdit`. `req.DynamicPath` carries a sub-entity id (e.g. a target user id)
+for per-row form actions.
 
 ## `adminhttp`
 

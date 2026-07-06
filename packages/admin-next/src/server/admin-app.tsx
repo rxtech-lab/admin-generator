@@ -1,11 +1,12 @@
 import * as React from "react";
 import type {
   ActionType,
+  DetailResponse,
   PaginatedResponse,
   ResourceInfo,
   ResourceSchema,
 } from "../types.js";
-import { isPaginated } from "../types.js";
+import { isDetail, isPaginated } from "../types.js";
 import { AdminShell } from "../components/admin-shell.js";
 import type { AdminActions } from "./actions.js";
 import { clientFor, type ResolvedAdminConfig } from "./config.js";
@@ -25,6 +26,7 @@ interface InitialView {
   dynamicPath?: string;
   schema: ResourceSchema;
   initialData?: PaginatedResponse;
+  initialDetail?: DetailResponse;
 }
 
 /**
@@ -61,11 +63,13 @@ export async function AdminApp({
     try {
       const schema = await client.getSchema(resourceId, action, dynamicPath);
       let initialData: PaginatedResponse | undefined;
+      let initialDetail: DetailResponse | undefined;
       if (action === "view") {
         const resp = await client.fetchAction(resourceId, "view", { dynamicPath });
         if (isPaginated(resp)) initialData = resp;
+        else if (isDetail(resp)) initialDetail = resp;
       }
-      initialView = { resourceId, action, dynamicPath, schema, initialData };
+      initialView = { resourceId, action, dynamicPath, schema, initialData, initialDetail };
     } catch (e) {
       error = (e as Error).message;
     }

@@ -56,9 +56,10 @@ func main() {
 				gormds.WithPreloads[models.Post]("Author"),
 				gormds.WithOrder[models.Post]("id DESC"), // newest first
 			),
-			CreateForm: models.CreatePostInput{},
-			EditForm:   models.UpdatePostInput{},
-			Authorize:  authorize(),
+			CreateForm:  models.CreatePostInput{},
+			EditForm:    models.UpdatePostInput{},
+			LinkPattern: map[string]string{"title": "/admin/posts/{id}"},
+			Authorize:   authorize(),
 		}),
 	)
 

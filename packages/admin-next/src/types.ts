@@ -95,6 +95,7 @@ export interface SearchItem {
 export interface Item {
   data: Record<string, unknown>;
   actions?: ActionButton[];
+  dynamicPath?: string;
 }
 
 export interface PaginatedResponse {

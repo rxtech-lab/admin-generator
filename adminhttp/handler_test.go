@@ -110,8 +110,9 @@ func TestViewListing(t *testing.T) {
 
 	var paginated struct {
 		Items []struct {
-			Data    map[string]any      `json:"data"`
-			Actions []admin.ActionButton `json:"actions"`
+			Data        map[string]any       `json:"data"`
+			Actions     []admin.ActionButton `json:"actions"`
+			DynamicPath string               `json:"dynamicPath"`
 		} `json:"items"`
 		Actions []admin.ActionButton `json:"actions"`
 	}
@@ -124,9 +125,29 @@ func TestViewListing(t *testing.T) {
 	if paginated.Items[0].Data["title"] != "First" {
 		t.Errorf("first item title: got %v", paginated.Items[0].Data["title"])
 	}
+	if paginated.Items[0].DynamicPath != "1" {
+		t.Errorf("first item dynamicPath: got %q", paginated.Items[0].DynamicPath)
+	}
 	// Each row carries edit + delete buttons.
 	if len(paginated.Items[0].Actions) != 2 {
 		t.Errorf("want 2 row actions, got %d", len(paginated.Items[0].Actions))
+	}
+}
+
+func TestViewDetail(t *testing.T) {
+	srv, _ := newServer(t)
+	resp := getJSON(t, srv.URL+"/admin/resources/posts/action?action=view&dynamicPath=1", nil)
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	var detail struct {
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(body, &detail); err != nil {
+		t.Fatalf("decode: %v (body: %s)", err, body)
+	}
+	if detail.Data["title"] != "First" {
+		t.Errorf("detail title: got %v", detail.Data["title"])
 	}
 }
 

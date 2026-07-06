@@ -4,6 +4,7 @@ import * as React from "react";
 import * as Icons from "lucide-react";
 import type {
   ActionType,
+  DetailResponse,
   PaginatedResponse,
   ResourceInfo,
   ResourceSchema,
@@ -23,6 +24,7 @@ export interface AdminShellProps {
     dynamicPath?: string;
     schema: ResourceSchema;
     initialData?: PaginatedResponse;
+    initialDetail?: DetailResponse;
   };
   actions: AdminActions;
   error?: string;
@@ -89,6 +91,7 @@ export function AdminShell({
             dynamicPath={initialView.dynamicPath}
             schema={initialView.schema}
             initialData={initialView.initialData}
+            initialDetail={initialView.initialDetail}
             actions={actions}
           />
         ) : (

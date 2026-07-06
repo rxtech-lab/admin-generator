@@ -121,8 +121,9 @@ type SearchItem struct {
 
 // Item is one row of a paginated response.
 type Item struct {
-	Data    any            `json:"data"`
-	Actions []ActionButton `json:"actions,omitempty"`
+	Data        any            `json:"data"`
+	Actions     []ActionButton `json:"actions,omitempty"`
+	DynamicPath string         `json:"dynamicPath,omitempty"`
 }
 
 // ActionResponse is the result of Fetch/Act. Exactly one of the three shapes is

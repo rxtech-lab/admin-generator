@@ -229,21 +229,16 @@ func (r *crudResource[M]) Fetch(ctx context.Context, req Request, action ActionT
 	}
 	switch action {
 	case ActionView:
+		if id := r.idFrom(req, formData); id != "" {
+			return r.detail(ctx, id)
+		}
 		return r.list(ctx, req)
 	case ActionEdit:
 		id := r.idFrom(req, formData)
 		if id == "" {
 			return nil, fmt.Errorf("%w: missing id for edit", ErrBadInput)
 		}
-		item, err := r.cfg.DataSource.Get(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-		data, err := toMap(item)
-		if err != nil {
-			return nil, err
-		}
-		return Detail(data), nil
+		return r.detail(ctx, id)
 	case ActionSearch:
 		query := req.Query.Get("query")
 		if query == "" && formData != nil {
@@ -293,7 +288,7 @@ func (r *crudResource[M]) list(ctx context.Context, req Request) (*ActionRespons
 				OnClick: r.actionURL(req, ActionDelete, rowID),
 			})
 		}
-		items = append(items, Item{Data: data, Actions: rowActions})
+		items = append(items, Item{Data: data, Actions: rowActions, DynamicPath: rowID})
 	}
 
 	var nextURL, prevURL *string
@@ -307,6 +302,18 @@ func (r *crudResource[M]) list(ctx context.Context, req Request) (*ActionRespons
 	}
 	info := r.Info(ctx, req)
 	return Paginated(items, info.SupportedActions, nextURL, prevURL), nil
+}
+
+func (r *crudResource[M]) detail(ctx context.Context, id string) (*ActionResponse, error) {
+	item, err := r.cfg.DataSource.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	data, err := toMap(item)
+	if err != nil {
+		return nil, err
+	}
+	return Detail(data), nil
 }
 
 func (r *crudResource[M]) Act(ctx context.Context, req Request, action ActionType, data map[string]any) (*ActionResponse, error) {

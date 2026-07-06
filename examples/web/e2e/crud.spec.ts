@@ -24,6 +24,12 @@ test("sidebar and tables render from the backend schema", async ({ page }) => {
   await expect(page.getByRole("cell", { name: "Ada Lovelace" }).first()).toBeVisible();
   // chip-formatted status.
   await expect(page.getByText("published").first()).toBeVisible();
+
+  await page.getByRole("link", { name: "Post number 25 about computing" }).click();
+  await expect(page).toHaveURL(/\/admin\/posts\/25$/);
+  await expect(page.getByRole("heading", { name: "Post number 25 about computing" })).toBeVisible();
+  await page.getByRole("link", { name: "Back to Posts" }).click();
+  await expect(page).toHaveURL(/\/admin\/posts$/);
 });
 
 test("create → edit → delete a post", async ({ page }) => {
