@@ -87,3 +87,7 @@ app/admin/[[...slug]]/page.tsx
 The first slug segment is the resource ID. Additional segments are passed as the
 resource dynamic path. The `action` query parameter selects the schema/action,
 defaulting to `view`.
+
+For generic table resources, rows with a `dynamicPath` navigate to
+`{basePath}/{resourceId}/{dynamicPath}` and render a read-only detail view from
+the resource's table schema plus the detail response.

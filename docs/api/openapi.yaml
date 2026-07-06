@@ -313,6 +313,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActionButton"
+        dynamicPath:
+          type: string
     PaginatedResponse:
       type: object
       required: [items, actions]

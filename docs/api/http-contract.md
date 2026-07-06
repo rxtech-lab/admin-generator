@@ -20,7 +20,7 @@ host Go application.
 | `GET` | `{base}/resources` | List registered resources and navigation metadata. |
 | `GET` | `{base}/resources/{id}` | Get metadata for one resource. |
 | `GET` | `{base}/resources/{id}/schema?action=&dynamicPath=` | Get the table or form schema for an action. Defaults to `view`. |
-| `GET` | `{base}/resources/{id}/action?action=&dynamicPath=&after=&limit=&formData=` | Fetch action data, including list pages, edit prefill data, and search results. |
+| `GET` | `{base}/resources/{id}/action?action=&dynamicPath=&after=&limit=&formData=` | Fetch action data, including list pages, detail data when `action=view&dynamicPath=...`, edit prefill data, and search results. |
 | `POST` | `{base}/resources/{id}/action` | Execute write-side actions such as create, edit, delete, or search POSTs. |
 
 ## Resource Metadata
@@ -93,6 +93,17 @@ Create and edit schemas have `uiType: "form"`, a JSON Schema payload, an RJSF
 - Detail: `{"data": {...}}`
 - Paginated list: `{"items": [...], "actions": [...], "nextUrl": "...", "previousUrl": "..."}`
 - Search results: `[{"title": "...", "description": "...", "value": "..."}]`
+
+List items include row data, optional row actions, and `dynamicPath` when the
+row can be opened as a detail route:
+
+```json
+{
+  "data": { "id": 1, "title": "First" },
+  "dynamicPath": "1",
+  "actions": []
+}
+```
 
 ## Errors
 

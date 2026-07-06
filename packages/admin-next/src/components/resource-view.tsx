@@ -4,14 +4,17 @@ import * as React from "react";
 import type {
   ActionButton,
   ActionType,
+  DetailResponse,
   PaginatedResponse,
   ResourceInfo,
   ResourceSchema,
+  TableColumn,
 } from "../types.js";
 import { isFormSchema, isPaginated, isTableSchema } from "../types.js";
 import type { AdminActions } from "../server/actions.js";
 import { ResourceTable } from "./resource-table.js";
 import { ResourceForm } from "./resource-form.js";
+import { CellRenderer } from "./cell-renderer.js";
 import { Sheet } from "./sheet.js";
 import { Button } from "./ui.js";
 
@@ -23,6 +26,7 @@ export interface ResourceViewProps {
   dynamicPath?: string;
   schema: ResourceSchema;
   initialData?: PaginatedResponse;
+  initialDetail?: DetailResponse;
   actions: AdminActions;
 }
 
@@ -56,7 +60,10 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
   if (isFormSchema(schema)) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Header title={resource?.name ?? resourceId} description={resource?.description} />
+        <Header
+          title={resource?.name ?? resourceId}
+          description={resource?.description}
+        />
         <ResourceForm
           resourceId={resourceId}
           action={schema.type as "create" | "edit"}
@@ -69,7 +76,10 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
     );
   }
 
-  const runRowAction = async (button: ActionButton, row: Record<string, unknown>) => {
+  const runRowAction = async (
+    button: ActionButton,
+    row: Record<string, unknown>,
+  ) => {
     const dynamicPath = extractDynamicPath(button.onClick);
     if (button.actionType === "edit") {
       setSheet({ action: "edit", dynamicPath });
@@ -84,31 +94,57 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Header title={resource?.name ?? resourceId} description={resource?.description} />
-        {resource?.supportedActions.some((a) => a.actionType === "create") && (
-          <Button onClick={() => setSheet({ action: "create" })}>
-            + Create
-          </Button>
-        )}
-      </div>
-
-      {isTableSchema(schema) && (
-        <ResourceTable
-          schema={schema}
-          data={data}
-          pending={pending}
-          onRowAction={runRowAction}
-          onNavigate={(url) => {
-            const after = new URL(url, "http://x").searchParams.get("after") ?? undefined;
-            refresh(after);
-          }}
+      {isTableSchema(schema) && props.dynamicPath && props.initialDetail ? (
+        <ResourceDetail
+          basePath={props.basePath}
+          resourceId={resourceId}
+          resource={resource}
+          dynamicPath={props.dynamicPath}
+          columns={schema.columns}
+          detail={props.initialDetail}
         />
+      ) : (
+        <>
+          <div className="mb-4 flex items-center justify-between">
+            <Header
+              title={resource?.name ?? resourceId}
+              description={resource?.description}
+            />
+            {resource?.supportedActions.some((a) => a.actionType === "create") && (
+              <Button onClick={() => setSheet({ action: "create" })}>
+                + Create
+              </Button>
+            )}
+          </div>
+
+          {isTableSchema(schema) && (
+            <ResourceTable
+              schema={schema}
+              data={data}
+              pending={pending}
+              onRowAction={runRowAction}
+              getRowHref={(item) =>
+                item.dynamicPath
+                  ? buildResourcePath(props.basePath, resourceId, item.dynamicPath)
+                  : undefined
+              }
+              onNavigate={(url) => {
+                const after =
+                  new URL(url, "http://x").searchParams.get("after") ?? undefined;
+                refresh(after);
+              }}
+            />
+          )}
+        </>
       )}
 
       <Sheet
         open={sheet !== null}
-        title={sheet?.action === "edit" ? `Edit ${resource?.name ?? ""}` : `Create ${resource?.name ?? ""}`}
+        title={
+          sheet?.action === "edit"
+            ? `Edit ${resource?.name ?? ""}`
+            : `Create ${resource?.name ?? ""}`
+        }
         onClose={() => setSheet(null)}
       >
         {sheet && (
@@ -126,6 +162,69 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
       </Sheet>
     </div>
   );
+}
+
+function ResourceDetail({
+  basePath,
+  resourceId,
+  resource,
+  dynamicPath,
+  columns,
+  detail,
+}: {
+  basePath: string;
+  resourceId: string;
+  resource?: ResourceInfo;
+  dynamicPath: string;
+  columns: TableColumn[];
+  detail: DetailResponse;
+}): React.JSX.Element {
+  const data = detail.data;
+  const title = String(data.title ?? data.name ?? data.id ?? dynamicPath);
+
+  return (
+    <div>
+      <div className="mb-4">
+        <a
+          href={buildResourcePath(basePath, resourceId)}
+          className="mb-2 inline-flex text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          Back to {resource?.name ?? resourceId}
+        </a>
+        <Header title={title} description={resource?.name ?? resourceId} />
+      </div>
+
+      <div className="rounded-lg border border-border">
+        <dl className="divide-y divide-border">
+          {columns.map((column) => (
+            <div
+              key={column.name}
+              className="grid gap-1 px-4 py-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4"
+            >
+              <dt className="text-sm font-medium text-muted-foreground">
+                {column.label}
+              </dt>
+              <dd className="min-w-0 text-sm">
+                <CellRenderer column={column} row={data} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+function buildResourcePath(
+  basePath: string,
+  resourceId: string,
+  dynamicPath?: string,
+): string {
+  const parts = [basePath.replace(/\/+$/, ""), encodeURIComponent(resourceId)];
+  if (dynamicPath) {
+    parts.push(...dynamicPath.split("/").filter(Boolean).map(encodeURIComponent));
+  }
+  return parts.join("/");
 }
 
 function Header({ title, description }: { title: string; description?: string }) {

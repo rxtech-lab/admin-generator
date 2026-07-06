@@ -26,6 +26,28 @@ export function CellRenderer({
     return <span className="text-muted-foreground">—</span>;
   }
 
+  const content = renderCellContent(column, value);
+  if (column.link) {
+    const href = renderLink(column.link, row);
+    if (href) {
+      return (
+        <a
+          href={href}
+          className="font-medium text-primary underline-offset-2 hover:underline"
+        >
+          {content}
+        </a>
+      );
+    }
+  }
+
+  return content;
+}
+
+function renderCellContent(
+  column: TableColumn,
+  value: unknown,
+): React.JSX.Element {
   switch (column.format) {
     case "date-time":
       return <span>{dayjs(String(value)).format("YYYY-MM-DD HH:mm")}</span>;
@@ -81,4 +103,32 @@ export function CellRenderer({
       }
       return <span>{String(value)}</span>;
   }
+}
+
+function renderLink(pattern: string, row: Record<string, unknown>): string {
+  const rendered = pattern.includes("{{")
+    ? renderTemplate(pattern, row)
+    : pattern.replace(/\{([^}]+)\}/g, (_, path: string) => {
+        const value = lookup(row, path);
+        return value == null ? "" : encodeURIComponent(String(value));
+      });
+  return String(rendered);
+}
+
+function lookup(data: unknown, path: string): unknown {
+  const parts = path.split(".").map((p) => p.trim()).filter(Boolean);
+  let current: unknown = data;
+  for (const part of parts) {
+    if (current == null || typeof current !== "object") return undefined;
+    const obj = current as Record<string, unknown>;
+    if (part in obj) {
+      current = obj[part];
+      continue;
+    }
+    const key = Object.keys(obj).find(
+      (k) => k.toLowerCase() === part.toLowerCase(),
+    );
+    current = key ? obj[key] : undefined;
+  }
+  return current;
 }
