@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
   ActionButton,
   ActionType,
@@ -37,6 +39,7 @@ interface SheetState {
 
 export function ResourceView(props: ResourceViewProps): React.JSX.Element {
   const { resource, resourceId, schema, actions } = props;
+  const router = useRouter();
   const [data, setData] = React.useState<PaginatedResponse | undefined>(
     props.initialData,
   );
@@ -133,6 +136,7 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
                   new URL(url, "http://x").searchParams.get("after") ?? undefined;
                 refresh(after);
               }}
+              onRowNavigate={(url) => router.push(url)}
             />
           )}
         </>
@@ -185,12 +189,12 @@ function ResourceDetail({
   return (
     <div>
       <div className="mb-4">
-        <a
+        <Link
           href={buildResourcePath(basePath, resourceId)}
           className="mb-2 inline-flex text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           Back to {resource?.name ?? resourceId}
-        </a>
+        </Link>
         <Header title={title} description={resource?.name ?? resourceId} />
       </div>
 
