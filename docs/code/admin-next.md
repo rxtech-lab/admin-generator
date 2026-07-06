@@ -91,3 +91,41 @@ defaulting to `view`.
 For generic table resources, rows with a `dynamicPath` navigate to
 `{basePath}/{resourceId}/{dynamicPath}` and render a read-only detail view from
 the resource's table schema plus the detail response.
+
+## Customizing the header
+
+`AdminApp` renders a full-width app header above the sidebar and content. Two
+optional props customize it so the host does not need to render its own header
+(which would produce a duplicated bar):
+
+- `title`: brand shown at the top-left. Accepts a string or any React node
+  (e.g. a logo). Defaults to `"Admin"`.
+- `headerActions`: content rendered at the top-right — typically the signed-in
+  user and a sign-out control. Because `AdminApp` is a Server Component, you can
+  pass a server-action `<form>` directly.
+
+```tsx
+import { AdminApp } from "@rxtech-lab/admin-generator-next/server";
+
+export default function AdminPage(props) {
+  return (
+    <AdminApp
+      config={adminConfig}
+      actions={actions}
+      params={props.params}
+      searchParams={props.searchParams}
+      title="Debate Bot Admin"
+      headerActions={
+        <form
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/login" });
+          }}
+        >
+          <button type="submit">Sign out</button>
+        </form>
+      }
+    />
+  );
+}
+```

@@ -28,6 +28,10 @@ export interface AdminShellProps {
   };
   actions: AdminActions;
   error?: string;
+  /** Brand shown at the top-left of the app header. Defaults to "Admin". */
+  title?: React.ReactNode;
+  /** Custom content rendered at the top-right of the app header. */
+  headerActions?: React.ReactNode;
 }
 
 /** Look up a lucide icon by its kebab/pascal name, with a sane fallback. */
@@ -50,54 +54,62 @@ export function AdminShell({
   initialView,
   actions,
   error,
+  title,
+  headerActions,
 }: AdminShellProps): React.JSX.Element {
   return (
     <AdminProvider actions={actions}>
-    <div className="ag-root flex min-h-screen bg-background text-foreground">
-      <aside className="ag-sidebar hidden w-64 shrink-0 border-r border-border bg-card md:block">
-        <div className="flex h-14 items-center border-b border-border px-4 font-semibold">
-          Admin
-        </div>
-        <nav className="flex flex-col gap-0.5 p-2">
-          {resources.map((r) => (
-            <a
-              key={r.id}
-              href={`${basePath}/${r.id}`}
-              className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                r.id === activeResourceId &&
-                  "bg-accent font-medium text-accent-foreground",
-              )}
-            >
-              <LucideIcon name={r.icon} className="size-4" />
-              {r.name}
-            </a>
-          ))}
-        </nav>
-      </aside>
+    <div className="ag-root flex min-h-screen flex-col bg-background text-foreground">
+      <header className="ag-header flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+        <div className="font-semibold">{title ?? "Admin"}</div>
+        {headerActions ? (
+          <div className="flex items-center gap-3">{headerActions}</div>
+        ) : null}
+      </header>
 
-      <main className="flex-1 overflow-x-auto p-6">
-        {error ? (
-          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        ) : initialView ? (
-          <ResourceView
-            key={`${initialView.resourceId}:${initialView.dynamicPath ?? ""}`}
-            basePath={basePath}
-            resource={resources.find((r) => r.id === initialView.resourceId)}
-            resourceId={initialView.resourceId}
-            action={initialView.action}
-            dynamicPath={initialView.dynamicPath}
-            schema={initialView.schema}
-            initialData={initialView.initialData}
-            initialDetail={initialView.initialDetail}
-            actions={actions}
-          />
-        ) : (
-          <Dashboard resources={resources} basePath={basePath} />
-        )}
-      </main>
+      <div className="flex flex-1">
+        <aside className="ag-sidebar hidden w-64 shrink-0 border-r border-border bg-card md:block">
+          <nav className="flex flex-col gap-0.5 p-2">
+            {resources.map((r) => (
+              <a
+                key={r.id}
+                href={`${basePath}/${r.id}`}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                  r.id === activeResourceId &&
+                    "bg-accent font-medium text-accent-foreground",
+                )}
+              >
+                <LucideIcon name={r.icon} className="size-4" />
+                {r.name}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="flex-1 overflow-x-auto p-6">
+          {error ? (
+            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          ) : initialView ? (
+            <ResourceView
+              key={`${initialView.resourceId}:${initialView.dynamicPath ?? ""}`}
+              basePath={basePath}
+              resource={resources.find((r) => r.id === initialView.resourceId)}
+              resourceId={initialView.resourceId}
+              action={initialView.action}
+              dynamicPath={initialView.dynamicPath}
+              schema={initialView.schema}
+              initialData={initialView.initialData}
+              initialDetail={initialView.initialDetail}
+              actions={actions}
+            />
+          ) : (
+            <Dashboard resources={resources} basePath={basePath} />
+          )}
+        </main>
+      </div>
     </div>
     </AdminProvider>
   );

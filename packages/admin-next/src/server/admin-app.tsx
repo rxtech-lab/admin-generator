@@ -18,6 +18,17 @@ export interface AdminAppProps {
   /** Next.js dynamic route params: the catch-all slug segments. */
   params: Promise<{ slug?: string[] }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  /**
+   * Brand shown at the top-left of the app header. Defaults to "Admin".
+   * Pass a string or any React node (e.g. a logo + name).
+   */
+  title?: React.ReactNode;
+  /**
+   * Custom content rendered at the top-right of the app header — e.g. the
+   * signed-in user's email and a Sign out button. Because AdminApp is a Server
+   * Component you can pass a server-action <form> here directly.
+   */
+  headerActions?: React.ReactNode;
 }
 
 interface InitialView {
@@ -41,6 +52,8 @@ export async function AdminApp({
   actions,
   params,
   searchParams,
+  title,
+  headerActions,
 }: AdminAppProps): Promise<React.JSX.Element> {
   const { slug } = await params;
   const sp = (await searchParams) ?? {};
@@ -94,6 +107,8 @@ export async function AdminApp({
       initialView={initialView}
       actions={plainActions}
       error={error}
+      title={title}
+      headerActions={headerActions}
     />
   );
 }
