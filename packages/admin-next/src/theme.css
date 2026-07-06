@@ -82,6 +82,14 @@
   --color-ring: var(--ring);
 }
 
+.ag-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
 /* Baseline styling for RJSF's default HTML controls and relation widgets. */
 .ag-form .ag-input,
 .ag-form input[type="text"],
