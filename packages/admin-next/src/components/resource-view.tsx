@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import type {
   ActionButton,
   ActionType,
@@ -185,12 +186,12 @@ function ResourceDetail({
   return (
     <div>
       <div className="mb-4">
-        <a
+        <Link
           href={buildResourcePath(basePath, resourceId)}
           className="mb-2 inline-flex text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
           Back to {resource?.name ?? resourceId}
-        </a>
+        </Link>
         <Header title={title} description={resource?.name ?? resourceId} />
       </div>
 

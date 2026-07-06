@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Icons from "lucide-react";
+import Link from "next/link";
 import type {
   ActionType,
   DetailResponse,
@@ -206,7 +207,7 @@ function SidebarContent({
 }): React.JSX.Element {
   return (
     <div className="flex min-h-full flex-col">
-      <a
+      <Link
         href={basePath}
         className={cn(
           "flex h-[var(--header-height)] items-center gap-2 px-3 text-sm font-semibold",
@@ -220,10 +221,10 @@ function SidebarContent({
         <span className={cn("truncate", collapsed && "sr-only")}>
           {title ?? "Admin"}
         </span>
-      </a>
+      </Link>
       <nav className="flex flex-1 flex-col gap-1 p-2">
         {resources.map((r) => (
-          <a
+          <Link
             key={r.id}
             href={`${basePath}/${r.id}`}
             className={cn(
@@ -238,7 +239,7 @@ function SidebarContent({
             <span className={cn("truncate", collapsed && "sr-only")}>
               {r.name}
             </span>
-          </a>
+          </Link>
         ))}
       </nav>
     </div>
@@ -295,7 +296,7 @@ function Dashboard({
       <h1 className="mb-4 text-2xl font-semibold">Resources</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {resources.map((r) => (
-          <a
+          <Link
             key={r.id}
             href={`${basePath}/${r.id}`}
             className="rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-sm"
@@ -305,7 +306,7 @@ function Dashboard({
               {r.name}
             </div>
             <p className="text-sm text-muted-foreground">{r.description}</p>
-          </a>
+          </Link>
         ))}
       </div>
     </div>
