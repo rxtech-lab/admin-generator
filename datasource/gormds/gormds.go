@@ -270,7 +270,7 @@ func (d *DataSource[T]) reflectValues(item *T, titleField string) (admin.SearchI
 		if !fv.IsValid() {
 			return ""
 		}
-		if fv.Kind() == reflect.Ptr {
+		if fv.Kind() == reflect.Pointer {
 			if fv.IsNil() {
 				return ""
 			}

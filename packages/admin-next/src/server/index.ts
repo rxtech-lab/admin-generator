@@ -1,4 +1,4 @@
-// Server-only entry point. Import from "@rxtech-lab/admin-next/server" in RSC /
+// Server-only entry point. Import from "@rxtech-lab/admin-generator-next/server" in RSC /
 // server-action code. Do NOT import this from a client component.
 
 export { AdminApp } from "./admin-app.js";

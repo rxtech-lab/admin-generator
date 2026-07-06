@@ -47,7 +47,7 @@ func ModelToTableColumns(model any, options *TableColumnOptions) ([]TableColumn,
 	}
 
 	t := reflect.TypeOf(model)
-	if t != nil && t.Kind() == reflect.Ptr {
+	if t != nil && t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t == nil || t.Kind() != reflect.Struct {
@@ -261,7 +261,7 @@ func validateFieldPath(path string, structType reflect.Type) error {
 	parts := strings.Split(path, ".")
 	current := structType
 	for i, part := range parts {
-		if current.Kind() == reflect.Ptr {
+		if current.Kind() == reflect.Pointer {
 			current = current.Elem()
 		}
 		if current.Kind() != reflect.Struct {

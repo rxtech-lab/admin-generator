@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { defineAdminConfig } from "@rxtech-lab/admin-next/server";
+import { defineAdminConfig } from "@rxtech-lab/admin-generator-next/server";
 
 /**
  * Server-only admin configuration. getToken pulls the bearer token from a

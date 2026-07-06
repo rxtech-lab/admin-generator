@@ -107,7 +107,7 @@ func ModelToUISchema(model any) (UISchema, error) {
 	if t == nil {
 		return nil, fmt.Errorf("model cannot be nil")
 	}
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
@@ -155,13 +155,13 @@ func ModelToUISchema(model any) (UISchema, error) {
 
 		// No tags: recurse into nested structs / slices of structs.
 		fieldType := field.Type
-		if fieldType.Kind() == reflect.Ptr {
+		if fieldType.Kind() == reflect.Pointer {
 			fieldType = fieldType.Elem()
 		}
 		switch {
 		case fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array:
 			elemType := fieldType.Elem()
-			if elemType.Kind() == reflect.Ptr {
+			if elemType.Kind() == reflect.Pointer {
 				elemType = elemType.Elem()
 			}
 			if elemType.Kind() == reflect.Struct && !isBasicType(elemType) {

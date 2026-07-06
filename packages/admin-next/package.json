@@ -1,16 +1,23 @@
 {
-  "name": "@rxtech-lab/admin-next",
+  "name": "@rxtech-lab/admin-generator-next",
   "version": "0.1.0",
   "description": "Schema-driven admin UI for Next.js. Renders admin pages from a backend JSON schema (pairs with the admin-generator Go package).",
   "license": "MIT",
   "type": "module",
-  "sideEffects": ["*.css"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rxtech-lab/admin-generator.git",
     "directory": "packages/admin-next"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

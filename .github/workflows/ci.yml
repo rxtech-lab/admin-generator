@@ -24,7 +24,7 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
 
@@ -39,11 +39,11 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
       - name: Build package
-        run: bun run --filter '@rxtech-lab/admin-next' build
+        run: bun run --filter '@rxtech-lab/admin-generator-next' build
       - name: Typecheck
-        run: bun run --filter '@rxtech-lab/admin-next' typecheck
+        run: bun run --filter '@rxtech-lab/admin-generator-next' typecheck
       - name: Test
-        run: bun run --filter '@rxtech-lab/admin-next' test
+        run: bun run --filter '@rxtech-lab/admin-generator-next' test
       - name: Build example app (RSC / directive regression net)
         run: bun run --filter 'web-example' build
         env:
@@ -63,7 +63,7 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
       - name: Build package
-        run: bun run --filter '@rxtech-lab/admin-next' build
+        run: bun run --filter '@rxtech-lab/admin-generator-next' build
       - name: Install Playwright browser
         run: bunx playwright install --with-deps chromium
       # Root test:e2e builds the app, then Playwright boots the Go API + Next app.

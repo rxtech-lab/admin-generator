@@ -13,21 +13,21 @@ catch-all route — no per-resource frontend code.
 ```
 
 - **Go module** — `github.com/rxtech-lab/admin-generator`
-- **npm package** — `@rxtech-lab/admin-next`
+- **npm package** — `@rxtech-lab/admin-generator-next`
 
 ## Repository layout
 
-| Path | What |
-|------|------|
-| `admin/` | Core: resource registry, generic CRUD, struct-tag reflection into table/form schemas |
-| `adminhttp/` | `net/http` handler for the 4-endpoint contract (router-agnostic; Fiber via `adaptor.HTTPHandler`) |
-| `adminauth/oidc/` | OIDC bearer authenticator (rxlab-auth / any OIDC provider) |
-| `adminauth/jwt/` | Dev-only HS256 authenticator + token signer |
-| `datasource/gormds/` | GORM adapter (`DataSource`) |
-| `datasource/memory/` | In-memory adapter for tests/demos |
-| `packages/admin-next/` | The npm package (React 19 / Next 15, RJSF forms, shadcn-style theme) |
-| `examples/server/` | Runnable Go demo (SQLite, seeded Authors + Posts) |
-| `examples/web/` | Runnable Next.js demo consuming the package |
+| Path                   | What                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `admin/`               | Core: resource registry, generic CRUD, struct-tag reflection into table/form schemas              |
+| `adminhttp/`           | `net/http` handler for the 4-endpoint contract (router-agnostic; Fiber via `adaptor.HTTPHandler`) |
+| `adminauth/oidc/`      | OIDC bearer authenticator (rxlab-auth / any OIDC provider)                                        |
+| `adminauth/jwt/`       | Dev-only HS256 authenticator + token signer                                                       |
+| `datasource/gormds/`   | GORM adapter (`DataSource`)                                                                       |
+| `datasource/memory/`   | In-memory adapter for tests/demos                                                                 |
+| `packages/admin-next/` | The npm package (React 19 / Next 15, RJSF forms, shadcn-style theme)                              |
+| `examples/server/`     | Runnable Go demo (SQLite, seeded Authors + Posts)                                                 |
+| `examples/web/`        | Runnable Next.js demo consuming the package                                                       |
 
 ## Go: define resources
 
@@ -92,8 +92,8 @@ Styling (Tailwind v4), in your global stylesheet:
 
 ```css
 @import "tailwindcss";
-@import "@rxtech-lab/admin-next/theme.css";
-@source "../node_modules/@rxtech-lab/admin-next/dist";
+@import "@rxtech-lab/admin-generator-next/theme.css";
+@source "../node_modules/@rxtech-lab/admin-generator-next/dist";
 ```
 
 ## Auth with rxlab-auth (OIDC)
@@ -131,14 +131,14 @@ cd examples/web && bun run dev
 
 ```bash
 go test ./...                                   # Go core
-bun run --filter '@rxtech-lab/admin-next' test  # package tests
-bun run --filter '@rxtech-lab/admin-next' build # package build
+bun run --filter '@rxtech-lab/admin-generator-next' test  # package tests
+bun run --filter '@rxtech-lab/admin-generator-next' build # package build
 ```
 
 ## Publishing
 
 - **npm** — add a changeset (`bun run changeset`); merging to `main` opens a
-  Version Packages PR, and merging that publishes `@rxtech-lab/admin-next` with
+  Version Packages PR, and merging that publishes `@rxtech-lab/admin-generator-next` with
   provenance (needs `NPM_TOKEN`).
 - **Go** — tag the repo: `git tag v0.1.0 && git push --tags`, then
   `go get github.com/rxtech-lab/admin-generator@v0.1.0`.

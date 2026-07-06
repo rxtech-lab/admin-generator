@@ -387,7 +387,7 @@ func (r *crudResource[M]) update(ctx context.Context, req Request, data map[stri
 func (r *crudResource[M]) bindForm(action ActionType, data map[string]any) (any, error) {
 	proto := r.formModel(action)
 	t := reflect.TypeOf(proto)
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	dto := reflect.New(t).Interface()

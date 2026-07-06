@@ -1,4 +1,4 @@
-# @rxtech-lab/admin-next
+# @rxtech-lab/admin-generator-next
 
 Schema-driven admin UI for Next.js. Renders admin list tables and create/edit
 forms from a backend JSON schema — pairs with the
@@ -7,7 +7,7 @@ forms from a backend JSON schema — pairs with the
 ## Install
 
 ```bash
-bun add @rxtech-lab/admin-next
+bun add @rxtech-lab/admin-generator-next
 # peers: next >= 15, react >= 19, react-dom >= 19, tailwindcss v4
 ```
 
@@ -15,7 +15,7 @@ bun add @rxtech-lab/admin-next
 
 ```ts
 // lib/admin-config.ts (server-only)
-import { defineAdminConfig } from "@rxtech-lab/admin-next/server";
+import { defineAdminConfig } from "@rxtech-lab/admin-generator-next/server";
 export const adminConfig = defineAdminConfig({
   apiUrl: process.env.ADMIN_API_URL!,
   getToken: async () => (await auth())?.accessToken ?? null,
@@ -25,7 +25,7 @@ export const adminConfig = defineAdminConfig({
 ```ts
 // app/admin/actions.ts
 "use server";
-import { createAdminActions } from "@rxtech-lab/admin-next/server";
+import { createAdminActions } from "@rxtech-lab/admin-generator-next/server";
 import { adminConfig } from "@/lib/admin-config";
 export const { listResources, getSchema, fetchAction, fetchUrl, submitAction } =
   createAdminActions(adminConfig);
@@ -33,7 +33,7 @@ export const { listResources, getSchema, fetchAction, fetchUrl, submitAction } =
 
 ```tsx
 // app/admin/[[...slug]]/page.tsx
-import { AdminApp } from "@rxtech-lab/admin-next/server";
+import { AdminApp } from "@rxtech-lab/admin-generator-next/server";
 import { adminConfig } from "@/lib/admin-config";
 import * as actions from "../actions";
 
@@ -48,17 +48,17 @@ export default function Page(props: {
 ```css
 /* app/globals.css */
 @import "tailwindcss";
-@import "@rxtech-lab/admin-next/theme.css";
-@source "../node_modules/@rxtech-lab/admin-next/dist";
+@import "@rxtech-lab/admin-generator-next/theme.css";
+@source "../node_modules/@rxtech-lab/admin-generator-next/dist";
 ```
 
 ## Exports
 
-- `@rxtech-lab/admin-next` — client components (`AdminShell`, `ResourceTable`,
+- `@rxtech-lab/admin-generator-next` — client components (`AdminShell`, `ResourceTable`,
   `ResourceForm`, `ForeignKeyWidget`, `CellRenderer`, `AdminClient`), types.
-- `@rxtech-lab/admin-next/server` — `AdminApp`, `defineAdminConfig`,
+- `@rxtech-lab/admin-generator-next/server` — `AdminApp`, `defineAdminConfig`,
   `createAdminActions` (import only from server / server-action code).
-- `@rxtech-lab/admin-next/theme.css` — design tokens + baseline form styles.
+- `@rxtech-lab/admin-generator-next/theme.css` — design tokens + baseline form styles.
 
 ## Notes
 

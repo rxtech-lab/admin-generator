@@ -28,7 +28,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build package
-        run: bun run --filter '@rxtech-lab/admin-next' build
+        run: bun run --filter '@rxtech-lab/admin-generator-next' build
 
       # Sets packages/admin-next/package.json to the release tag version, then
       # publishes to npm.

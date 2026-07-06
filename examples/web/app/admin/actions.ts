@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminActions } from "@rxtech-lab/admin-next/server";
+import { createAdminActions } from "@rxtech-lab/admin-generator-next/server";
 import { adminConfig } from "@/lib/admin-config";
 
 // Exporting async functions from a "use server" module makes them callable from

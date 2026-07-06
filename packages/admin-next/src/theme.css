@@ -1,11 +1,11 @@
 /*
- * @rxtech-lab/admin-next theme.
+ * @rxtech-lab/admin-generator-next theme.
  *
  * Import once in your app's global stylesheet, after `@import "tailwindcss"`:
  *
  *   @import "tailwindcss";
- *   @import "@rxtech-lab/admin-next/theme.css";
- *   @source "../node_modules/@rxtech-lab/admin-next/dist";
+ *   @import "@rxtech-lab/admin-generator-next/theme.css";
+ *   @source "../node_modules/@rxtech-lab/admin-generator-next/dist";
  *
  * Defines the shadcn-style design tokens the components reference (bg-background,
  * text-foreground, border-border, ...) and maps them to Tailwind v4 theme colors

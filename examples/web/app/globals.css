@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@import "@rxtech-lab/admin-next/theme.css";
+@import "@rxtech-lab/admin-generator-next/theme.css";
 
 /* Scan the admin package's compiled output so its utility classes are generated. */
-@source "../node_modules/@rxtech-lab/admin-next/dist";
+@source "../node_modules/@rxtech-lab/admin-generator-next/dist";
 
 body {
   background: var(--background);

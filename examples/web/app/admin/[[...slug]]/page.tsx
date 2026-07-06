@@ -1,4 +1,4 @@
-import { AdminApp } from "@rxtech-lab/admin-next/server";
+import { AdminApp } from "@rxtech-lab/admin-generator-next/server";
 import { adminConfig } from "@/lib/admin-config";
 import * as actions from "../actions";
 

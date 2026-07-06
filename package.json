@@ -6,9 +6,9 @@
     "examples/web"
   ],
   "scripts": {
-    "build": "bun run --filter '@rxtech-lab/admin-next' build",
+    "build": "bun run --filter '@rxtech-lab/admin-generator-next' build",
     "typecheck": "bun run --filter '*' typecheck",
-    "test": "bun run --filter '@rxtech-lab/admin-next' test",
+    "test": "bun run --filter '@rxtech-lab/admin-generator-next' test",
     "test:e2e": "bun run --filter 'web-example' test:e2e",
     "test:e2e:ui": "bun run --filter 'web-example' test:e2e:ui"
   }

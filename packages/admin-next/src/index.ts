@@ -1,5 +1,5 @@
 // Client-safe exports: components, widgets, types, and the API client.
-// Server-only helpers (config, actions, AdminApp) live in "@rxtech-lab/admin-next/server".
+// Server-only helpers (config, actions, AdminApp) live in "@rxtech-lab/admin-generator-next/server".
 
 export * from "./types.js";
 export { AdminClient, AdminApiError } from "./api/client.js";

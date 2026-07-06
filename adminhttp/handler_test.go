@@ -178,7 +178,9 @@ func TestCreateValidationError(t *testing.T) {
 	}
 	dec, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
-	json.Unmarshal(dec, &body)
+	if err := json.Unmarshal(dec, &body); err != nil {
+		t.Fatalf("failed to unmarshal response body: %v", err)
+	}
 	if _, ok := body.Fields["title"]; !ok {
 		t.Errorf("expected title validation error, got %+v", body.Fields)
 	}
