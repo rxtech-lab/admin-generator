@@ -35,6 +35,28 @@ export interface AdminShellProps {
   headerActions?: React.ReactNode;
 }
 
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "ag:sidebar-collapsed";
+
+function readPersistedSidebarCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function persistSidebarCollapsed(collapsed: boolean): void {
+  try {
+    window.localStorage.setItem(
+      SIDEBAR_COLLAPSED_STORAGE_KEY,
+      String(collapsed),
+    );
+  } catch {
+    // Ignore storage failures; the in-memory collapsed state still works.
+  }
+}
+
 /** Look up a lucide icon by its kebab/pascal name, with a sane fallback. */
 function LucideIcon({ name, className }: { name: string; className?: string }) {
   const pascal = name
@@ -61,6 +83,17 @@ export function AdminShell({
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const activeResource = resources.find((r) => r.id === activeResourceId);
   const pageTitle = activeResource?.name ?? "Resources";
+  const toggleSidebarCollapsed = React.useCallback(() => {
+    setSidebarCollapsed((collapsed) => {
+      const next = !collapsed;
+      persistSidebarCollapsed(next);
+      return next;
+    });
+  }, []);
+
+  React.useEffect(() => {
+    setSidebarCollapsed(readPersistedSidebarCollapsed());
+  }, []);
 
   return (
     <AdminProvider actions={actions}>
@@ -99,7 +132,7 @@ export function AdminShell({
                 className="hidden size-9 items-center justify-center rounded-md text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:inline-flex"
                 aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 aria-expanded={!sidebarCollapsed}
-                onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+                onClick={toggleSidebarCollapsed}
               >
                 <Icons.PanelLeft className="size-4" />
               </button>
