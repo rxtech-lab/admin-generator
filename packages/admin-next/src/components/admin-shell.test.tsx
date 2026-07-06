@@ -25,13 +25,16 @@ const noopActions: AdminActions = {
   submitAction: vi.fn(),
 };
 
-function renderShell() {
+function renderShell({
+  initialSidebarCollapsed,
+}: { initialSidebarCollapsed?: boolean } = {}) {
   return render(
     <AdminShell
       basePath="/admin"
       resources={resources}
       activeResourceId="posts"
       actions={noopActions}
+      initialSidebarCollapsed={initialSidebarCollapsed}
     />,
   );
 }
@@ -39,15 +42,23 @@ function renderShell() {
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  document.cookie = "ag_sidebar_collapsed=; path=/; max-age=0";
 });
 
 describe("AdminShell", () => {
+  it("uses the server-provided collapsed sidebar state on initial render", () => {
+    renderShell({ initialSidebarCollapsed: true });
+
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeTruthy();
+  });
+
   it("restores the persisted collapsed sidebar state after remount", async () => {
     renderShell();
 
     fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
 
     expect(window.localStorage.getItem("ag:sidebar-collapsed")).toBe("true");
+    expect(document.cookie).toContain("ag_sidebar_collapsed=true");
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeTruthy();
 
     cleanup();

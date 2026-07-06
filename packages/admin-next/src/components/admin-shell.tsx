@@ -34,16 +34,25 @@ export interface AdminShellProps {
   title?: React.ReactNode;
   /** Custom content rendered at the top-right of the app header. */
   headerActions?: React.ReactNode;
+  /** Initial desktop sidebar state read by the server to avoid hydration flicker. */
+  initialSidebarCollapsed?: boolean;
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "ag:sidebar-collapsed";
+const SIDEBAR_COLLAPSED_COOKIE_KEY = "ag_sidebar_collapsed";
 
-function readPersistedSidebarCollapsed(): boolean {
-  if (typeof window === "undefined") return false;
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
+
+function readPersistedSidebarCollapsed(): boolean | null {
+  if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
+    const value = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -55,6 +64,13 @@ function persistSidebarCollapsed(collapsed: boolean): void {
     );
   } catch {
     // Ignore storage failures; the in-memory collapsed state still works.
+  }
+  try {
+    document.cookie = `${SIDEBAR_COLLAPSED_COOKIE_KEY}=${String(
+      collapsed,
+    )}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch {
+    // Ignore cookie failures; localStorage still covers client remounts.
   }
 }
 
@@ -80,8 +96,11 @@ export function AdminShell({
   error,
   title,
   headerActions,
+  initialSidebarCollapsed = false,
 }: AdminShellProps): React.JSX.Element {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(
+    initialSidebarCollapsed,
+  );
   const activeResource = resources.find((r) => r.id === activeResourceId);
   const pageTitle = activeResource?.name ?? "Resources";
   const toggleSidebarCollapsed = React.useCallback(() => {
@@ -92,8 +111,9 @@ export function AdminShell({
     });
   }, []);
 
-  React.useEffect(() => {
-    setSidebarCollapsed(readPersistedSidebarCollapsed());
+  useIsomorphicLayoutEffect(() => {
+    const persisted = readPersistedSidebarCollapsed();
+    if (persisted !== null) setSidebarCollapsed(persisted);
   }, []);
 
   return (

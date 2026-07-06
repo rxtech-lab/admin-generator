@@ -1,4 +1,5 @@
 import * as React from "react";
+import { cookies } from "next/headers";
 import type {
   ActionType,
   DetailResponse,
@@ -10,6 +11,8 @@ import { isDetail, isPaginated } from "../types.js";
 import { AdminShell } from "../components/admin-shell.js";
 import type { AdminActions } from "./actions.js";
 import { clientFor, type ResolvedAdminConfig } from "./config.js";
+
+const SIDEBAR_COLLAPSED_COOKIE_KEY = "ag_sidebar_collapsed";
 
 export interface AdminAppProps {
   config: ResolvedAdminConfig;
@@ -57,6 +60,8 @@ export async function AdminApp({
 }: AdminAppProps): Promise<React.JSX.Element> {
   const { slug } = await params;
   const sp = (await searchParams) ?? {};
+  const initialSidebarCollapsed =
+    (await cookies()).get(SIDEBAR_COLLAPSED_COOKIE_KEY)?.value === "true";
   const client = await clientFor(config);
 
   let resources: ResourceInfo[] = [];
@@ -109,6 +114,7 @@ export async function AdminApp({
       error={error}
       title={title}
       headerActions={headerActions}
+      initialSidebarCollapsed={initialSidebarCollapsed}
     />
   );
 }
