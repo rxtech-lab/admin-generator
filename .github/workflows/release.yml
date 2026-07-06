@@ -8,21 +8,22 @@ concurrency: release-${{ github.ref }}
 
 permissions:
   contents: read
-  id-token: write # npm provenance
+  id-token: write # Required for npm trusted publishing via OIDC.
 
 jobs:
   release-npm:
     name: Publish to NPM
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
 
       - name: Install
         run: bun install --frozen-lockfile
@@ -31,9 +32,6 @@ jobs:
         run: bun run --filter '@rxtech-lab/admin-generator-next' build
 
       # Sets packages/admin-next/package.json to the release tag version, then
-      # publishes to npm.
+      # publishes to npm through the package's trusted publisher configuration.
       - name: Publish to NPM
         run: node scripts/publish.js ${{ github.event.release.tag_name }}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"

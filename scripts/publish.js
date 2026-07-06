@@ -21,13 +21,9 @@ pkg.version = version;
 fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 console.log(`Set ${pkg.name} version to ${version}`);
 
-// Authenticate to npm using the token from the environment.
-execSync(`npm config set //registry.npmjs.org/:_authToken ${process.env.NPM_TOKEN}`, {
-  stdio: "inherit",
-});
-
-// Publish from the package directory with provenance.
-execSync("npm publish --access public --provenance", {
+// Publish from the package directory. In GitHub Actions, npm authenticates via
+// the package's trusted publisher OIDC configuration.
+execSync("npm publish --access public", {
   cwd: pkgDir,
   stdio: "inherit",
 });

@@ -1,0 +1,361 @@
+openapi: 3.1.0
+info:
+  title: admin-generator HTTP API
+  version: 0.1.0
+  description: Generic admin API contract served by adminhttp.New.
+servers:
+  - url: /admin
+paths:
+  /resources:
+    get:
+      summary: List resources
+      operationId: listResources
+      responses:
+        "200":
+          description: Registered resources.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /resources/{id}:
+    get:
+      summary: Get resource metadata
+      operationId: getResource
+      parameters:
+        - $ref: "#/components/parameters/ResourceID"
+      responses:
+        "200":
+          description: Resource metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /resources/{id}/schema:
+    get:
+      summary: Get action schema
+      operationId: getSchema
+      parameters:
+        - $ref: "#/components/parameters/ResourceID"
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ActionType"
+        - name: dynamicPath
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Table or form schema.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/TableSchema"
+                  - $ref: "#/components/schemas/FormSchema"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /resources/{id}/action:
+    get:
+      summary: Fetch action data
+      operationId: fetchAction
+      parameters:
+        - $ref: "#/components/parameters/ResourceID"
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ActionType"
+        - name: dynamicPath
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: formData
+          in: query
+          required: false
+          schema:
+            type: string
+          description: JSON-encoded form data used by some fetch actions.
+      responses:
+        "200":
+          description: Action response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Execute an action
+      operationId: postAction
+      parameters:
+        - $ref: "#/components/parameters/ResourceID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, data]
+              properties:
+                action:
+                  $ref: "#/components/schemas/ActionType"
+                data:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Action response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+components:
+  parameters:
+    ResourceID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Bad request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Unauthorized.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationFailed:
+      description: Validation failed.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, fields]
+            properties:
+              error:
+                type: string
+              fields:
+                type: object
+                additionalProperties:
+                  type: string
+  schemas:
+    ActionType:
+      type: string
+      enum: [view, edit, delete, create, search, export]
+    ResourceType:
+      type: string
+      enum: [table, detail, form]
+    ButtonType:
+      type: string
+      enum: [primary, secondary, danger, warning, info, success]
+    Behavior:
+      type: string
+      enum: [navigate, submit, openSheet, openDialog, confirmDialog]
+    ActionButton:
+      type: object
+      required: [type, label, icon, behavior, actionType, onClick]
+      properties:
+        type:
+          $ref: "#/components/schemas/ButtonType"
+        label:
+          type: string
+        icon:
+          type: string
+        behavior:
+          $ref: "#/components/schemas/Behavior"
+        actionType:
+          $ref: "#/components/schemas/ActionType"
+        onClick:
+          type: string
+    ResourceInfo:
+      type: object
+      required: [id, name, description, icon, type, dataUrl, defaultAction, supportedActions]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        dataUrl:
+          type: string
+        defaultAction:
+          $ref: "#/components/schemas/ActionType"
+        supportedActions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionButton"
+    TableColumn:
+      type: object
+      required: [name, label, type, pinned]
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [string, number, boolean, object, array]
+        format:
+          type: string
+        width:
+          type: integer
+        pinned:
+          type: boolean
+        valueFrom:
+          type: string
+        link:
+          type: string
+    TableSchema:
+      type: object
+      required: [uiType, type, columns]
+      properties:
+        uiType:
+          const: table
+        type:
+          $ref: "#/components/schemas/ActionType"
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/TableColumn"
+    FormSchema:
+      type: object
+      required: [uiType, type, schema, uiSchema, supportedActions]
+      properties:
+        uiType:
+          const: form
+        type:
+          $ref: "#/components/schemas/ActionType"
+        schema:
+          type: object
+          additionalProperties: true
+        uiSchema:
+          type: object
+          additionalProperties: true
+        supportedActions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionButton"
+    Item:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionButton"
+    PaginatedResponse:
+      type: object
+      required: [items, actions]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionButton"
+        nextUrl:
+          type: string
+        previousUrl:
+          type: string
+    DetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+    SearchItem:
+      type: object
+      required: [title, value]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        value:
+          type: string
+    ActionResponse:
+      oneOf:
+        - $ref: "#/components/schemas/DetailResponse"
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: array
+          items:
+            $ref: "#/components/schemas/SearchItem"
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
