@@ -1,0 +1,39 @@
+name: Release NPM Package
+
+on:
+  release:
+    types: [released]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  release-npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build package
+        run: bun run --filter '@rxtech-lab/admin-next' build
+
+      # Sets packages/admin-next/package.json to the release tag version, then
+      # publishes to npm.
+      - name: Publish to NPM
+        run: node scripts/publish.js ${{ github.event.release.tag_name }}
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"

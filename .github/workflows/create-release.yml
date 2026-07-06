@@ -1,0 +1,25 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the tag and GitHub Release
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # semantic-release-action bundles semantic-release + the default plugins
+      # (commit-analyzer, release-notes-generator, github), so no install step
+      # is needed. Using RELEASE_TOKEN (a PAT) so the published Release fires the
+      # `release: released` event that triggers release.yml — a GITHUB_TOKEN
+      # release would not trigger downstream workflows.
+      - name: Create Release
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

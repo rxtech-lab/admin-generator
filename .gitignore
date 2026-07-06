@@ -1,0 +1,25 @@
+# deps
+node_modules/
+
+# builds
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# env / local
+.env
+.env.local
+.env*.local
+*.db
+*.sqlite
+
+# misc
+.DS_Store
+coverage/
+
+# playwright
+.playwright-mcp/
+playwright-report/
+test-results/
+examples/server/e2e.db
