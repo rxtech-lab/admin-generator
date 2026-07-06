@@ -17,11 +17,10 @@ export function Sheet({ open, title, onClose, children }: SheetProps): React.JSX
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Overlay className="ag-sheet-overlay fixed inset-0 z-50 bg-black/40" />
         <Dialog.Content
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-card shadow-lg",
-            "data-[state=open]:animate-in data-[state=open]:slide-in-from-right",
+            "ag-sheet-content fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-card shadow-lg",
           )}
         >
           <div className="flex h-14 items-center justify-between border-b border-border px-4">
