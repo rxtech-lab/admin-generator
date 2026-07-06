@@ -110,7 +110,7 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
               title={resource?.name ?? resourceId}
               description={resource?.description}
             />
-            {resource?.supportedActions.some((a) => a.actionType === "create") && (
+            {resource?.supportedActions?.some((a) => a.actionType === "create") && (
               <Button onClick={() => setSheet({ action: "create" })}>
                 + Create
               </Button>
