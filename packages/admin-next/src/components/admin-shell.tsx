@@ -52,7 +52,7 @@ export function AdminShell({
   return (
     <AdminProvider actions={actions}>
     <div className="ag-root flex min-h-screen bg-background text-foreground">
-      <aside className="hidden w-64 shrink-0 border-r border-border bg-card md:block">
+      <aside className="ag-sidebar hidden w-64 shrink-0 border-r border-border bg-card md:block">
         <div className="flex h-14 items-center border-b border-border px-4 font-semibold">
           Admin
         </div>

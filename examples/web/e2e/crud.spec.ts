@@ -13,6 +13,13 @@ test("sidebar and tables render from the backend schema", async ({ page }) => {
   await page.goto("/admin/posts");
   await expect(page.getByRole("link", { name: "Posts" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Authors" })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(page.locator(".ag-sidebar")).toHaveCSS("position", "sticky");
+  await expect(page.getByRole("link", { name: "Posts" })).toBeVisible();
+  const sidebarTop = await page
+    .locator(".ag-sidebar")
+    .evaluate((element) => element.getBoundingClientRect().top);
+  expect(sidebarTop).toBe(0);
   // valueFrom relation column resolves the author name.
   await expect(page.getByRole("cell", { name: "Ada Lovelace" }).first()).toBeVisible();
   // chip-formatted status.
