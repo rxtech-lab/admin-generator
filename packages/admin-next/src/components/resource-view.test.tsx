@@ -1,8 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ResourceInfo, TableSchema } from "../types.js";
 import type { AdminActions } from "../server/actions.js";
 import { ResourceView } from "./resource-view.js";
+
+const routerPush = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPush }),
+}));
 
 const schema: TableSchema = {
   uiType: "table",
@@ -17,6 +23,10 @@ const noopActions: AdminActions = {
   fetchUrl: vi.fn(),
   submitAction: vi.fn(),
 };
+
+afterEach(() => {
+  routerPush.mockReset();
+});
 
 describe("ResourceView", () => {
   // A form/custom resource can return a nil SupportedActions slice, which
@@ -82,5 +92,35 @@ describe("ResourceView", () => {
     );
 
     expect(screen.getByText("+ Create")).toBeTruthy();
+  });
+
+  it("uses the Next router for row navigation", () => {
+    render(
+      <ResourceView
+        basePath="/admin"
+        resource={{
+          id: "posts",
+          name: "Posts",
+          description: "",
+          icon: "file",
+          type: "table",
+          dataUrl: "/admin/resources/posts/action?action=view",
+          defaultAction: "view",
+          supportedActions: [],
+        }}
+        resourceId="posts"
+        action="view"
+        schema={schema}
+        initialData={{
+          items: [{ data: { id: 1 }, dynamicPath: "1", actions: [] }],
+          actions: [],
+        }}
+        actions={noopActions}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("row", { name: "Open row 1" }));
+
+    expect(routerPush).toHaveBeenCalledWith("/admin/posts/1");
   });
 });

@@ -41,9 +41,6 @@ export interface AdminShellProps {
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "ag:sidebar-collapsed";
 const SIDEBAR_COLLAPSED_COOKIE_KEY = "ag_sidebar_collapsed";
 
-const useIsomorphicLayoutEffect =
-  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
-
 function readPersistedSidebarCollapsed(): boolean | null {
   if (typeof window === "undefined") return null;
   try {
@@ -98,8 +95,8 @@ export function AdminShell({
   headerActions,
   initialSidebarCollapsed = false,
 }: AdminShellProps): React.JSX.Element {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(
-    initialSidebarCollapsed,
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(() =>
+    readPersistedSidebarCollapsed() ?? initialSidebarCollapsed,
   );
   const activeResource = resources.find((r) => r.id === activeResourceId);
   const pageTitle = activeResource?.name ?? "Resources";
@@ -109,11 +106,6 @@ export function AdminShell({
       persistSidebarCollapsed(next);
       return next;
     });
-  }, []);
-
-  useIsomorphicLayoutEffect(() => {
-    const persisted = readPersistedSidebarCollapsed();
-    if (persisted !== null) setSidebarCollapsed(persisted);
   }, []);
 
   return (

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
   ActionButton,
   ActionType,
@@ -38,6 +39,7 @@ interface SheetState {
 
 export function ResourceView(props: ResourceViewProps): React.JSX.Element {
   const { resource, resourceId, schema, actions } = props;
+  const router = useRouter();
   const [data, setData] = React.useState<PaginatedResponse | undefined>(
     props.initialData,
   );
@@ -134,6 +136,7 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
                   new URL(url, "http://x").searchParams.get("after") ?? undefined;
                 refresh(after);
               }}
+              onRowNavigate={(url) => router.push(url)}
             />
           )}
         </>

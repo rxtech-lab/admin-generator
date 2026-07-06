@@ -52,6 +52,14 @@ describe("AdminShell", () => {
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeTruthy();
   });
 
+  it("prefers localStorage over the server-provided sidebar state", () => {
+    window.localStorage.setItem("ag:sidebar-collapsed", "true");
+
+    renderShell({ initialSidebarCollapsed: false });
+
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeTruthy();
+  });
+
   it("restores the persisted collapsed sidebar state after remount", async () => {
     renderShell();
 
