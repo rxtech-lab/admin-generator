@@ -92,7 +92,7 @@ export function AdminShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 p-2 md:py-3 md:pr-3">
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
             <header className="ag-header sticky top-0 z-40 flex h-[var(--header-height)] shrink-0 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:px-6">
               <button
                 type="button"
