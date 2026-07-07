@@ -102,18 +102,11 @@ func ModelToTableColumns(model any, options *TableColumnOptions) ([]TableColumn,
 	return columns, nil
 }
 
-// reflectSchema runs invopop reflection and resolves the root $ref so callers
-// get the actual object schema.
+// reflectSchema runs invopop reflection and inlines nested definitions so RJSF
+// receives self-contained object schemas for arrays and nested structs.
 func reflectSchema(model any) *jsonschema.Schema {
-	r := new(jsonschema.Reflector)
-	schema := r.Reflect(model)
-	if schema.Ref != "" && len(schema.Ref) > len("#/$defs/") && schema.Definitions != nil {
-		defName := schema.Ref[len("#/$defs/"):]
-		if def, ok := schema.Definitions[defName]; ok {
-			return def
-		}
-	}
-	return schema
+	r := &jsonschema.Reflector{DoNotReference: true}
+	return r.Reflect(model)
 }
 
 func extractFieldInfos(t reflect.Type, schema *jsonschema.Schema) ([]fieldInfo, error) {

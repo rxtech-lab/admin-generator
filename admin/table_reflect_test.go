@@ -22,6 +22,43 @@ type sampleModel struct {
 	Internal  string       `json:"-"`
 }
 
+type sampleRule struct {
+	Name   string `json:"name" jsonschema:"title=Name"`
+	Action string `json:"action" jsonschema:"title=Action,enum=allow,enum=deny"`
+}
+
+type sampleArrayObjectForm struct {
+	Rules []sampleRule `json:"rules" jsonschema:"title=Rules"`
+}
+
+func TestReflectSchema_InlinesArrayObjectItems(t *testing.T) {
+	schema := reflectSchema(sampleArrayObjectForm{})
+	rules, ok := schema.Properties.Get("rules")
+	if !ok {
+		t.Fatal("rules property missing")
+	}
+	if rules.Type != "array" {
+		t.Fatalf("rules type = %q, want array", rules.Type)
+	}
+	if rules.Items == nil {
+		t.Fatal("rules items missing")
+	}
+	if rules.Items.Ref != "" {
+		t.Fatalf("rules items ref = %q, want inlined object schema", rules.Items.Ref)
+	}
+	if rules.Items.Type != "object" {
+		t.Fatalf("rules items type = %q, want object", rules.Items.Type)
+	}
+	if _, ok := rules.Items.Properties.Get("name"); !ok {
+		t.Fatal("rules item name property missing")
+	}
+	if action, ok := rules.Items.Properties.Get("action"); !ok {
+		t.Fatal("rules item action property missing")
+	} else if len(action.Enum) != 2 {
+		t.Fatalf("rules item action enum len = %d, want 2", len(action.Enum))
+	}
+}
+
 func TestModelToTableColumns(t *testing.T) {
 	cols, err := ModelToTableColumns(&sampleModel{}, nil)
 	if err != nil {

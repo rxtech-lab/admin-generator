@@ -12,6 +12,14 @@ import type { FormSchema } from "../types.js";
 import { isDetail } from "../types.js";
 import type { AdminActions } from "../server/actions.js";
 import { ForeignKeyWidget } from "./widgets/foreign-key.js";
+import {
+  AddButton,
+  ArrayFieldItemTemplate,
+  CopyButton,
+  MoveDownButton,
+  MoveUpButton,
+  RemoveButton,
+} from "./array-templates.js";
 import { Button } from "./ui.js";
 
 /** Keep only the keys declared in the form schema's `properties`. */
@@ -55,6 +63,17 @@ function ErrorListTemplate({ errors }: ErrorListProps): React.JSX.Element {
 
 const templates: Partial<TemplatesType> = {
   ErrorListTemplate,
+  // RJSF's default array buttons use Bootstrap glyphicon/grid classes that are
+  // invisible in this shadcn/Tailwind theme. Swap in shadcn-styled ones so
+  // array fields (Add row / remove / reorder) are usable.
+  ArrayFieldItemTemplate,
+  ButtonTemplates: {
+    AddButton,
+    RemoveButton,
+    MoveUpButton,
+    MoveDownButton,
+    CopyButton,
+  } as TemplatesType["ButtonTemplates"],
 };
 
 export interface ResourceFormProps {
@@ -64,6 +83,7 @@ export interface ResourceFormProps {
   schema: FormSchema;
   actions: AdminActions;
   onDone: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export function ResourceForm({
@@ -73,12 +93,31 @@ export function ResourceForm({
   schema,
   actions,
   onDone,
+  onDirtyChange,
 }: ResourceFormProps): React.JSX.Element {
   const [formData, setFormData] = React.useState<Record<string, unknown>>({});
   const [extraErrors, setExtraErrors] = React.useState<Record<string, unknown>>();
   const [submitError, setSubmitError] = React.useState<string>();
   const [submitting, setSubmitting] = React.useState(false);
   const [loading, setLoading] = React.useState(action === "edit");
+  const initialFormDataRef = React.useRef<Record<string, unknown>>({});
+
+  const reportDirty = React.useCallback(
+    (nextData: Record<string, unknown>) => {
+      const dirty =
+        action === "create"
+          ? hasFormData(nextData)
+          : !formDataEquals(nextData, initialFormDataRef.current);
+      onDirtyChange?.(dirty);
+    },
+    [action, onDirtyChange],
+  );
+
+  React.useEffect(() => {
+    if (action !== "create") return;
+    initialFormDataRef.current = {};
+    onDirtyChange?.(false);
+  }, [action, onDirtyChange, schema]);
 
   // Prefill on edit by fetching the current record. Only keep keys the form
   // schema declares: the backend returns the full model (id, timestamps,
@@ -90,7 +129,10 @@ export function ResourceForm({
     actions.fetchAction(resourceId, "edit", { dynamicPath }).then((res) => {
       if (!active) return;
       if (res.ok && isDetail(res.data)) {
-        setFormData(pickSchemaKeys(res.data.data, schema));
+        const picked = pickSchemaKeys(res.data.data, schema);
+        initialFormDataRef.current = picked;
+        setFormData(picked);
+        onDirtyChange?.(false);
       }
       setLoading(false);
     });
@@ -106,6 +148,7 @@ export function ResourceForm({
     const res = await actions.submitAction(resourceId, action, data, dynamicPath);
     setSubmitting(false);
     if (res.ok) {
+      onDirtyChange?.(false);
       onDone();
       return;
     }
@@ -136,7 +179,11 @@ export function ResourceForm({
         templates={templates}
         validator={validator}
         extraErrors={extraErrors as never}
-        onChange={(e) => setFormData(e.formData as Record<string, unknown>)}
+        onChange={(e) => {
+          const nextData = e.formData as Record<string, unknown>;
+          setFormData(nextData);
+          reportDirty(nextData);
+        }}
         onSubmit={(e) => submit(e.formData as Record<string, unknown>)}
         showErrorList="top"
       >
@@ -150,5 +197,28 @@ export function ResourceForm({
         </div>
       </Form>
     </div>
+  );
+}
+
+function hasFormData(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") {
+    return Object.values(value).some(hasFormData);
+  }
+  if (typeof value === "string") return value.trim().length > 0;
+  return value !== undefined && value !== null;
+}
+
+function formDataEquals(a: unknown, b: unknown): boolean {
+  return JSON.stringify(sortObjectKeys(a)) === JSON.stringify(sortObjectKeys(b));
+}
+
+function sortObjectKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortObjectKeys);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, item]) => [key, sortObjectKeys(item)]),
   );
 }

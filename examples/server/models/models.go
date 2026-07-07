@@ -1,7 +1,10 @@
 // Package models defines the demo entities exposed through the admin framework.
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Author is a blog author. The `table:` tags drive the admin list view and the
 // `jsonschema:` tags feed the form schema when Author is edited directly.
@@ -14,6 +17,24 @@ type Author struct {
 	CreatedAt time.Time `json:"createdAt" jsonschema:"title=Joined,format=date-time" table:"order=4;format=date-time"`
 }
 
+// PostTag demonstrates an array-of-object form field.
+type PostTag struct {
+	Name  string `json:"name" jsonschema:"title=Name,required" validate:"required"`
+	Color string `json:"color,omitempty" jsonschema:"title=Color" uischema:"widget=color"`
+}
+
+// UnmarshalJSON keeps old demo databases readable when they contain the former
+// string tag shape, e.g. ["computing"].
+func (t *PostTag) UnmarshalJSON(data []byte) error {
+	var name string
+	if err := json.Unmarshal(data, &name); err == nil {
+		t.Name = name
+		return nil
+	}
+	type alias PostTag
+	return json.Unmarshal(data, (*alias)(t))
+}
+
 // Post is a blog post belonging to an Author.
 type Post struct {
 	ID        uint      `gorm:"primaryKey" json:"id" jsonschema:"title=ID" table:"order=0;pinned=true;width=60"`
@@ -22,5 +43,6 @@ type Post struct {
 	AuthorID  uint      `gorm:"index" json:"authorId" jsonschema:"title=Author" table:"order=3"`
 	Author    Author    `gorm:"foreignKey:AuthorID" json:"author" table:"order=4;valuefrom={{.Author.Name}}"`
 	Color     string    `gorm:"type:varchar(20)" json:"color" jsonschema:"title=Label Color" table:"order=5;format=color;width=90"`
+	Tags      []PostTag `gorm:"serializer:json" json:"tags" jsonschema:"title=Tags" table:"omit"`
 	CreatedAt time.Time `json:"createdAt" jsonschema:"title=Created,format=date-time" table:"order=6;format=date-time"`
 }

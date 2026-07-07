@@ -56,6 +56,7 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
   );
   const [currentPageUrl, setCurrentPageUrl] = React.useState(initialPageUrl);
   const [sheet, setSheet] = React.useState<SheetState | null>(null);
+  const [sheetHasUnsavedData, setSheetHasUnsavedData] = React.useState(false);
   const [pending, setPending] = React.useState(false);
 
   const fetchPage = React.useCallback(
@@ -161,6 +162,7 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
     }
     const dynamicPath = extractDynamicPath(button.onClick);
     if (button.actionType === "edit") {
+      setSheetHasUnsavedData(false);
       setSheet({ action: "edit", dynamicPath });
     } else if (button.actionType === "delete") {
       const label = String(row.title ?? row.name ?? row.id ?? "this item");
@@ -190,7 +192,12 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
               description={resource?.description}
             />
             {resource?.supportedActions?.some((a) => a.actionType === "create") && (
-              <Button onClick={() => setSheet({ action: "create" })}>
+              <Button
+                onClick={() => {
+                  setSheetHasUnsavedData(false);
+                  setSheet({ action: "create" });
+                }}
+              >
                 + Create
               </Button>
             )}
@@ -223,7 +230,16 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
             ? `Edit ${resource?.name ?? ""}`
             : `Create ${resource?.name ?? ""}`
         }
-        onClose={() => setSheet(null)}
+        onClose={() => {
+          if (
+            sheetHasUnsavedData &&
+            !confirm("Close this form? This will remove all data you entered.")
+          ) {
+            return;
+          }
+          setSheetHasUnsavedData(false);
+          setSheet(null);
+        }}
       >
         {sheet && (
           <SheetForm
@@ -231,7 +247,9 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
             action={sheet.action}
             dynamicPath={sheet.dynamicPath}
             actions={actions}
+            onDirtyChange={setSheetHasUnsavedData}
             onDone={() => {
+              setSheetHasUnsavedData(false);
               setSheet(null);
               refresh();
             }}
@@ -322,12 +340,14 @@ function SheetForm({
   action,
   dynamicPath,
   actions,
+  onDirtyChange,
   onDone,
 }: {
   resourceId: string;
   action: "create" | "edit";
   dynamicPath?: string;
   actions: AdminActions;
+  onDirtyChange: (dirty: boolean) => void;
   onDone: () => void;
 }): React.JSX.Element {
   const [schema, setSchema] = React.useState<ResourceSchema | null>(null);
@@ -356,6 +376,7 @@ function SheetForm({
       dynamicPath={dynamicPath}
       schema={schema}
       actions={actions}
+      onDirtyChange={onDirtyChange}
       onDone={onDone}
     />
   );

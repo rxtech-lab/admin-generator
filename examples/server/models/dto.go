@@ -21,15 +21,17 @@ type UpdateAuthorInput struct {
 // ForeignKey widget, which the frontend renders as a search-select backed by
 // the "authors" resource's search action.
 type CreatePostInput struct {
-	Title    string `json:"title" jsonschema:"title=Title,required" validate:"required"`
-	Status   string `json:"status" jsonschema:"title=Status,enum=draft,enum=published,enum=archived,default=draft" validate:"required,oneof=draft published archived"`
-	AuthorID uint   `json:"authorId" jsonschema:"title=Author,required" validate:"required" uischema:"widget=ForeignKey;ui:options:resource=authors;ui:options:placeholder=Search authors"`
-	Color    string `json:"color,omitempty" jsonschema:"title=Label Color" uischema:"widget=color"`
+	Title    string    `json:"title" jsonschema:"title=Title,required" validate:"required"`
+	Status   string    `json:"status" jsonschema:"title=Status,enum=draft,enum=published,enum=archived,default=draft" validate:"required,oneof=draft published archived"`
+	AuthorID uint      `json:"authorId" jsonschema:"title=Author,required" validate:"required" uischema:"widget=ForeignKey;ui:options:resource=authors;ui:options:placeholder=Search authors"`
+	Color    string    `json:"color,omitempty" jsonschema:"title=Label Color" uischema:"widget=color"`
+	Tags     []PostTag `json:"tags,omitempty" jsonschema:"title=Tags,description=Structured labels. Use Add to append a tag object." validate:"dive"`
 }
 
 type UpdatePostInput struct {
-	Title    string `json:"title" jsonschema:"title=Title,required" validate:"required"`
-	Status   string `json:"status" jsonschema:"title=Status,enum=draft,enum=published,enum=archived" validate:"required,oneof=draft published archived"`
-	AuthorID uint   `json:"authorId" jsonschema:"title=Author,required" validate:"required" uischema:"widget=ForeignKey;ui:options:resource=authors;ui:options:placeholder=Search authors"`
-	Color    string `json:"color,omitempty" jsonschema:"title=Label Color" uischema:"widget=color"`
+	Title    string    `json:"title" jsonschema:"title=Title,required" validate:"required"`
+	Status   string    `json:"status" jsonschema:"title=Status,enum=draft,enum=published,enum=archived" validate:"required,oneof=draft published archived"`
+	AuthorID uint      `json:"authorId" jsonschema:"title=Author,required" validate:"required" uischema:"widget=ForeignKey;ui:options:resource=authors;ui:options:placeholder=Search authors"`
+	Color    string    `json:"color,omitempty" jsonschema:"title=Label Color" uischema:"widget=color"`
+	Tags     []PostTag `json:"tags,omitempty" jsonschema:"title=Tags,description=Structured labels. Use Add to append a tag object." validate:"dive"`
 }
