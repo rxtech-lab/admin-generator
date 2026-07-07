@@ -3,6 +3,7 @@ package gormds
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -172,19 +173,32 @@ func (d *DataSource[T]) Update(ctx context.Context, id string, patch map[string]
 	if err := d.parseSchema(); err != nil {
 		return zero, err
 	}
-	// Translate JSON field names to column names; unknown keys are dropped so
-	// clients cannot write columns that aren't exposed on the model.
-	columnPatch := make(map[string]any, len(patch))
+	// Keep only JSON field names exposed by the model. Update through a typed
+	// struct patch instead of a raw column map so GORM field metadata still
+	// applies, including serializers such as `serializer:json`.
+	modelPatchData := make(map[string]any, len(patch))
+	selectedFields := make([]string, 0, len(patch))
 	for k, v := range patch {
-		if col, ok := d.jsonToColumn[k]; ok && col != d.pkColumn {
-			columnPatch[col] = v
+		col, ok := d.jsonToColumn[k]
+		if !ok || col == d.pkColumn {
+			continue
 		}
+		field := d.jsonToField[k]
+		if field == "" {
+			continue
+		}
+		modelPatchData[k] = v
+		selectedFields = append(selectedFields, field)
 	}
-	if len(columnPatch) > 0 {
+	if len(modelPatchData) > 0 {
 		var model T
+		if err := convertVia(modelPatchData, &model); err != nil {
+			return zero, err
+		}
 		res := d.db.WithContext(ctx).Model(&model).
 			Where(fmt.Sprintf("%s = ?", d.pkColumn), id).
-			Updates(columnPatch)
+			Select(selectedFields).
+			Updates(&model)
 		if res.Error != nil {
 			return zero, res.Error
 		}
@@ -193,6 +207,14 @@ func (d *DataSource[T]) Update(ctx context.Context, id string, patch map[string]
 		}
 	}
 	return d.Get(ctx, id)
+}
+
+func convertVia(from, to any) error {
+	b, err := json.Marshal(from)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, to)
 }
 
 func (d *DataSource[T]) Delete(ctx context.Context, id string) error {
