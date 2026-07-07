@@ -27,6 +27,20 @@ func seed(db *gorm.DB) {
 
 	statuses := []string{"draft", "published", "archived"}
 	colors := []string{"#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6"}
+	tagSets := [][]models.PostTag{
+		{
+			{Name: "computing", Color: "#3b82f6"},
+			{Name: "history", Color: "#f59e0b"},
+		},
+		{
+			{Name: "algorithms", Color: "#10b981"},
+		},
+		{
+			{Name: "hardware", Color: "#ef4444"},
+			{Name: "compilers", Color: "#8b5cf6"},
+			{Name: "featured", Color: "#f59e0b"},
+		},
+	}
 	var posts []models.Post
 	for i := 0; i < 25; i++ {
 		posts = append(posts, models.Post{
@@ -34,6 +48,7 @@ func seed(db *gorm.DB) {
 			Status:   statuses[i%len(statuses)],
 			AuthorID: authors[i%len(authors)].ID,
 			Color:    colors[i%len(colors)],
+			Tags:     tagSets[i%len(tagSets)],
 		})
 	}
 	if err := db.Create(&posts).Error; err != nil {
