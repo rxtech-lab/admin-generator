@@ -38,6 +38,52 @@ function pickSchemaKeys(
   return out;
 }
 
+type SchemaNode = {
+  type?: string | string[];
+  properties?: Record<string, SchemaNode>;
+  items?: SchemaNode;
+};
+
+function normalizeFormDataForSchema(
+  data: Record<string, unknown>,
+  schema: FormSchema,
+): Record<string, unknown> {
+  return normalizeValueForSchema(data, schema.schema as SchemaNode) as Record<
+    string,
+    unknown
+  >;
+}
+
+function normalizeValueForSchema(value: unknown, schema?: SchemaNode): unknown {
+  if (!schema) return value;
+  if (schemaHasType(schema, "array")) {
+    if (value === null || value === undefined) return [];
+    if (Array.isArray(value)) {
+      return value.map((item) => normalizeValueForSchema(item, schema.items));
+    }
+    return value;
+  }
+  if (
+    schemaHasType(schema, "object") &&
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      out[key] = normalizeValueForSchema(item, schema.properties?.[key]);
+    }
+    return out;
+  }
+  return value;
+}
+
+function schemaHasType(schema: SchemaNode, type: string): boolean {
+  return Array.isArray(schema.type)
+    ? schema.type.includes(type)
+    : schema.type === type;
+}
+
 const widgets: RegistryWidgetsType = {
   ForeignKey: ForeignKeyWidget,
   // ObjectSearch reuses the ForeignKey combo-search behavior.
@@ -129,7 +175,10 @@ export function ResourceForm({
     actions.fetchAction(resourceId, "edit", { dynamicPath }).then((res) => {
       if (!active) return;
       if (res.ok && isDetail(res.data)) {
-        const picked = pickSchemaKeys(res.data.data, schema);
+        const picked = normalizeFormDataForSchema(
+          pickSchemaKeys(res.data.data, schema),
+          schema,
+        );
         initialFormDataRef.current = picked;
         setFormData(picked);
         onDirtyChange?.(false);
