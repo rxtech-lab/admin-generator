@@ -56,13 +56,14 @@ paths:
             type: string
       responses:
         "200":
-          description: Table or form schema.
+          description: Table, form, or custom page schema.
           content:
             application/json:
               schema:
                 oneOf:
                   - $ref: "#/components/schemas/TableSchema"
                   - $ref: "#/components/schemas/FormSchema"
+                  - $ref: "#/components/schemas/CustomResourcePage"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -203,10 +204,10 @@ components:
   schemas:
     ActionType:
       type: string
-      enum: [view, edit, delete, create, search, export]
+      description: Built-in actions include view, edit, delete, create, search, and export; resources may define custom action names.
     ResourceType:
       type: string
-      enum: [table, detail, form]
+      enum: [table, detail, form, custom]
     ButtonType:
       type: string
       enum: [primary, secondary, danger, warning, info, success]
@@ -302,6 +303,88 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActionButton"
+    ChartSeries:
+      type: object
+      required: [key]
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        color:
+          type: string
+    Chart:
+      type: object
+      required: [type, data, xKey]
+      properties:
+        type:
+          type: string
+          enum: [bar, line]
+        title:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        xKey:
+          type: string
+        yKey:
+          type: string
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartSeries"
+    Statistic:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value: {}
+        description:
+          type: string
+        trend:
+          type: string
+        tone:
+          type: string
+    CustomPageSection:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [charts, statistics, text]
+        title:
+          type: string
+        description:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/Chart"
+        statistics:
+          type: array
+          items:
+            $ref: "#/components/schemas/Statistic"
+        body:
+          type: string
+    CustomResourcePage:
+      type: object
+      required: [uiType, type, actionButtons, sections]
+      properties:
+        uiType:
+          const: custom
+        type:
+          $ref: "#/components/schemas/ActionType"
+        actionButtons:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionButton"
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomPageSection"
     Item:
       type: object
       required: [data]

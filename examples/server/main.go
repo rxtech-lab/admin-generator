@@ -36,6 +36,74 @@ func main() {
 
 	reg := admin.NewRegistry()
 	reg.Register(
+		admin.NewCustomResourcePage(admin.CustomResourceConfig{
+			ID:          "dashboard",
+			Name:        "Dashboard",
+			Description: "Content and traffic overview",
+			Icon:        "layout-dashboard",
+			Page: admin.CustomResourcePage{
+				ActionButtons: []admin.ActionButton{{
+					Type:       admin.ButtonSecondary,
+					Label:      "Open Posts",
+					Icon:       "file-text",
+					Behavior:   admin.BehaviorNavigate,
+					ActionType: admin.ActionView,
+					OnClick:    "/admin/posts",
+				}},
+				Sections: []admin.CustomPageSection{
+					{
+						Type:  admin.CustomPageSectionStatistics,
+						Title: "Overview",
+						Statistics: []admin.Statistic{
+							{Label: "Published posts", Value: 17, Trend: "+12%", Tone: "positive"},
+							{Label: "Drafts", Value: 8},
+							{Label: "Authors", Value: 3},
+							{Label: "Monthly views", Value: "24.8k", Trend: "+8%", Tone: "positive"},
+						},
+					},
+					{
+						Type:  admin.CustomPageSectionCharts,
+						Title: "Traffic",
+						Children: []admin.Chart{
+							{
+								Type:  admin.ChartTypeBar,
+								Title: "Views by day",
+								Data: []map[string]any{
+									{"day": "Mon", "views": 320},
+									{"day": "Tue", "views": 540},
+									{"day": "Wed", "views": 410},
+									{"day": "Thu", "views": 780},
+									{"day": "Fri", "views": 690},
+								},
+								XKey: "day",
+								YKey: "views",
+							},
+							{
+								Type:  admin.ChartTypeLine,
+								Title: "Engagement",
+								Data: []map[string]any{
+									{"day": "Mon", "reads": 120, "shares": 18},
+									{"day": "Tue", "reads": 180, "shares": 24},
+									{"day": "Wed", "reads": 160, "shares": 20},
+									{"day": "Thu", "reads": 260, "shares": 44},
+									{"day": "Fri", "reads": 220, "shares": 39},
+								},
+								XKey: "day",
+								Series: []admin.ChartSeries{
+									{Key: "reads", Label: "Reads"},
+									{Key: "shares", Label: "Shares"},
+								},
+							},
+						},
+					},
+					{
+						Type:  admin.CustomPageSectionText,
+						Title: "Editorial note",
+						Body:  "Review draft posts weekly and keep author profiles current before publishing.",
+					},
+				},
+			},
+		}),
 		admin.NewResource[models.Author](admin.ResourceConfig[models.Author]{
 			ID:          "authors",
 			Name:        "Authors",

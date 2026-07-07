@@ -7,8 +7,8 @@ export default async function Home() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
       <h1 className="text-2xl font-semibold">Admin Generator Example</h1>
       <p className="text-sm text-muted-foreground">
-        A schema-driven admin UI rendered entirely from the Go backend&apos;s
-        JSON schema.
+        A schema-driven admin UI with tables, forms, links, and custom
+        dashboard pages rendered from the Go backend&apos;s JSON schema.
       </p>
       {signedIn ? (
         <Link

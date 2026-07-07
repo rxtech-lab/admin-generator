@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test("sidebar and tables render from the backend schema", async ({ page }) => {
   await page.goto("/admin/posts");
+  await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Posts" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Authors" })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -25,10 +26,54 @@ test("sidebar and tables render from the backend schema", async ({ page }) => {
   // chip-formatted status.
   await expect(page.getByText("published").first()).toBeVisible();
 
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("cell", { name: "Post number 5 about computing" })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/posts\?(?=.*after=)(?=.*limit=)/);
+  await page.reload();
+  await expect(page.getByRole("cell", { name: "Post number 5 about computing" })).toBeVisible();
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("cell", { name: "Post number 25 about computing" })).toBeVisible();
+
   await page.getByRole("link", { name: "Post number 25 about computing" }).click();
   await expect(page).toHaveURL(/\/admin\/posts\/25$/);
   await expect(page.getByRole("heading", { name: "Post number 25 about computing" })).toBeVisible();
   await page.getByRole("link", { name: "Back to Posts" }).click();
+  await expect(page).toHaveURL(/\/admin\/posts$/);
+});
+
+test("custom dashboard page renders from the backend schema", async ({ page }) => {
+  await page.goto("/admin/dashboard");
+  const main = page.getByRole("main");
+
+  await expect(main.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(main.getByText("Content and traffic overview")).toBeVisible();
+  await expect(main.getByText("Published posts")).toBeVisible();
+  await expect(main.getByText("Monthly views")).toBeVisible();
+  await expect(main.getByText("Views by day")).toBeVisible();
+  await expect(main.getByText("views", { exact: true })).toBeVisible();
+  await expect(main.getByText("Engagement")).toBeVisible();
+  await expect(main.getByText("Editorial note")).toBeVisible();
+  await expect(main.getByText("Review draft posts weekly")).toBeVisible();
+
+  await main
+    .locator('[data-chart-type="bar"] svg[role="application"]')
+    .hover({ position: { x: 80, y: 120 } });
+  const tooltip = main.getByRole("tooltip");
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toContainText("Mon");
+  await expect(tooltip).toContainText("views");
+  await expect(tooltip).toContainText("320");
+
+  await main
+    .locator('[data-chart-type="line"] svg[role="application"]')
+    .hover({ position: { x: 80, y: 120 } });
+  await expect(tooltip).toContainText("Tue");
+  await expect(tooltip).toContainText("Reads");
+  await expect(tooltip).toContainText("180");
+  await expect(tooltip).toContainText("Shares");
+  await expect(tooltip).toContainText("24");
+
+  await main.getByRole("button", { name: "Open Posts" }).click();
   await expect(page).toHaveURL(/\/admin\/posts$/);
 });
 
