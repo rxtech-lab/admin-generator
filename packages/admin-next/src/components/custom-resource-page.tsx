@@ -9,6 +9,7 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
+  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -113,21 +114,34 @@ function ChartSection({
 }: {
   section: Extract<CustomPageSection, { type: "charts" }>;
 }): React.JSX.Element {
+  const charts = section.children ?? [];
+  const gridClassName =
+    charts.length === 1 ? "grid gap-3" : "grid gap-3 @2xl/main:grid-cols-2";
+
   return (
     <section>
       <SectionHeading title={section.title} description={section.description} />
-      <div className="grid gap-3 @2xl/main:grid-cols-2">
-        {(section.children ?? []).map((chart, index) => (
-          <div
-            key={`${chart.title ?? chart.type}:${index}`}
-            className="rounded-lg border border-border p-4"
-          >
-            {chart.title && (
-              <div className="mb-3 text-sm font-medium">{chart.title}</div>
-            )}
-            <SimpleChart chart={chart} />
-          </div>
-        ))}
+      <div className={gridClassName}>
+        {charts.map((chart, index) => {
+          const isOddLastChart =
+            charts.length > 1 &&
+            charts.length % 2 === 1 &&
+            index === charts.length - 1;
+
+          return (
+            <div
+              key={`${chart.title ?? chart.type}:${index}`}
+              className={`rounded-lg border border-border p-4${
+                isOddLastChart ? " @2xl/main:col-span-2" : ""
+              }`}
+            >
+              {chart.title && (
+                <div className="mb-3 text-sm font-medium">{chart.title}</div>
+              )}
+              <SimpleChart chart={chart} />
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -201,88 +215,88 @@ function SimpleChart({ chart }: { chart: Chart }): React.JSX.Element {
   }
 
   return (
-    <div className="h-64 w-full" data-chart-type={kind}>
-      {kind === "line" ? (
-        <AreaChart
-          width={480}
-          height={250}
-          data={data}
-          margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
-          style={{ width: "100%", height: "100%" }}
-          accessibilityLayer
-        >
-          <CartesianGrid stroke="var(--border)" vertical={false} />
-          <XAxis
-            dataKey={chart.xKey}
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-          />
-          <YAxis hide />
-          <Tooltip
-            content={<ChartTooltip />}
-            cursor={{ stroke: "var(--border)" }}
-            offset={0}
-          />
-          <Legend
-            iconType="circle"
-            wrapperStyle={{ color: "var(--muted-foreground)", fontSize: 12 }}
-          />
-          {series.map((s, index) => {
-            const color = s.color ?? paletteColor(index);
-            return (
-              <Area
+    <div className="w-full" data-chart-type={kind}>
+      <ResponsiveContainer
+        width="100%"
+        height={256}
+        minWidth={0}
+      >
+        {kind === "line" ? (
+          <AreaChart
+            data={data}
+            margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
+            accessibilityLayer
+          >
+            <CartesianGrid stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey={chart.xKey}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+            />
+            <YAxis hide />
+            <Tooltip
+              content={<ChartTooltip />}
+              cursor={{ stroke: "var(--border)" }}
+              offset={0}
+            />
+            <Legend
+              iconType="circle"
+              wrapperStyle={{ color: "var(--muted-foreground)", fontSize: 12 }}
+            />
+            {series.map((s, index) => {
+              const color = s.color ?? paletteColor(index);
+              return (
+                <Area
+                  key={s.key}
+                  type="monotone"
+                  dataKey={s.key}
+                  name={s.label ?? s.key}
+                  stroke={color}
+                  fill={color}
+                  fillOpacity={0.12}
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: color, strokeWidth: 0 }}
+                  activeDot={{ r: 5 }}
+                />
+              );
+            })}
+          </AreaChart>
+        ) : (
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
+            accessibilityLayer
+          >
+            <CartesianGrid stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey={chart.xKey}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+            />
+            <YAxis hide />
+            <Tooltip
+              content={<ChartTooltip />}
+              cursor={{ fill: "var(--muted)" }}
+              offset={0}
+            />
+            <Legend
+              iconType="circle"
+              wrapperStyle={{ color: "var(--muted-foreground)", fontSize: 12 }}
+            />
+            {series.map((s, index) => (
+              <Bar
                 key={s.key}
-                type="monotone"
                 dataKey={s.key}
                 name={s.label ?? s.key}
-                stroke={color}
-                fill={color}
-                fillOpacity={0.12}
-                strokeWidth={3}
-                dot={{ r: 4, fill: color, strokeWidth: 0 }}
-                activeDot={{ r: 5 }}
+                fill={s.color ?? paletteColor(index)}
+                radius={[4, 4, 0, 0]}
               />
-            );
-          })}
-        </AreaChart>
-      ) : (
-        <BarChart
-          width={480}
-          height={250}
-          data={data}
-          margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
-          style={{ width: "100%", height: "100%" }}
-          accessibilityLayer
-        >
-          <CartesianGrid stroke="var(--border)" vertical={false} />
-          <XAxis
-            dataKey={chart.xKey}
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-          />
-          <YAxis hide />
-          <Tooltip
-            content={<ChartTooltip />}
-            cursor={{ fill: "var(--muted)" }}
-            offset={0}
-          />
-          <Legend
-            iconType="circle"
-            wrapperStyle={{ color: "var(--muted-foreground)", fontSize: 12 }}
-          />
-          {series.map((s, index) => (
-            <Bar
-              key={s.key}
-              dataKey={s.key}
-              name={s.label ?? s.key}
-              fill={s.color ?? paletteColor(index)}
-              radius={[4, 4, 0, 0]}
-            />
-          ))}
-        </BarChart>
-      )}
+            ))}
+          </BarChart>
+        )}
+      </ResponsiveContainer>
     </div>
   );
 }

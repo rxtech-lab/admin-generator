@@ -97,6 +97,70 @@ func main() {
 						},
 					},
 					{
+						Type:  admin.CustomPageSectionCharts,
+						Title: "Audience",
+						Children: []admin.Chart{
+							{
+								Type:  admin.ChartTypeLine,
+								Title: "Subscribers",
+								Data: []map[string]any{
+									{"day": "Mon", "subscribers": 42},
+									{"day": "Tue", "subscribers": 58},
+									{"day": "Wed", "subscribers": 73},
+									{"day": "Thu", "subscribers": 81},
+									{"day": "Fri", "subscribers": 96},
+								},
+								XKey: "day",
+								YKey: "subscribers",
+							},
+						},
+					},
+					{
+						Type:  admin.CustomPageSectionCharts,
+						Title: "Publishing pipeline",
+						Children: []admin.Chart{
+							{
+								Type:  admin.ChartTypeLine,
+								Title: "Drafts created",
+								Data: []map[string]any{
+									{"day": "Mon", "drafts": 4},
+									{"day": "Tue", "drafts": 7},
+									{"day": "Wed", "drafts": 5},
+									{"day": "Thu", "drafts": 9},
+									{"day": "Fri", "drafts": 6},
+								},
+								XKey: "day",
+								YKey: "drafts",
+							},
+							{
+								Type:  admin.ChartTypeLine,
+								Title: "Reviews completed",
+								Data: []map[string]any{
+									{"day": "Mon", "reviews": 3},
+									{"day": "Tue", "reviews": 4},
+									{"day": "Wed", "reviews": 6},
+									{"day": "Thu", "reviews": 5},
+									{"day": "Fri", "reviews": 8},
+								},
+								XKey: "day",
+								YKey: "reviews",
+							},
+							{
+								Type:  admin.ChartTypeLine,
+								Title: "Posts scheduled",
+								Data: []map[string]any{
+									{"day": "Mon", "scheduled": 2},
+									{"day": "Tue", "scheduled": 3},
+									{"day": "Wed", "scheduled": 4},
+									{"day": "Thu", "scheduled": 7},
+									{"day": "Fri", "scheduled": 5},
+								},
+								XKey: "day",
+								YKey: "scheduled",
+							},
+						},
+					},
+					{
 						Type:  admin.CustomPageSectionText,
 						Title: "Editorial note",
 						Body:  "Review draft posts weekly and keep author profiles current before publishing.",

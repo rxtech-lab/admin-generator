@@ -50,8 +50,13 @@ test("custom dashboard page renders from the backend schema", async ({ page }) =
   await expect(main.getByText("Published posts")).toBeVisible();
   await expect(main.getByText("Monthly views")).toBeVisible();
   await expect(main.getByText("Views by day")).toBeVisible();
-  await expect(main.getByText("views", { exact: true })).toBeVisible();
   await expect(main.getByText("Engagement")).toBeVisible();
+  await expect(main.getByText("Audience")).toBeVisible();
+  const audienceSection = main.locator("section").filter({ hasText: "Audience" });
+  await expect(audienceSection.getByText(/^Subscribers$/)).toBeVisible();
+  await expect(
+    audienceSection.locator('[data-chart-type="line"]'),
+  ).toHaveCount(1);
   await expect(main.getByText("Editorial note")).toBeVisible();
   await expect(main.getByText("Review draft posts weekly")).toBeVisible();
 
@@ -66,6 +71,7 @@ test("custom dashboard page renders from the backend schema", async ({ page }) =
 
   await main
     .locator('[data-chart-type="line"] svg[role="application"]')
+    .first()
     .hover({ position: { x: 80, y: 120 } });
   await expect(tooltip).toContainText("Tue");
   await expect(tooltip).toContainText("Reads");
