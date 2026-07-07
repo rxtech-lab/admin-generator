@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { CustomResourcePage, ResourceInfo, TableSchema } from "../types.js";
 import type { AdminActions } from "../server/actions.js";
@@ -24,10 +24,45 @@ const noopActions: AdminActions = {
   submitAction: vi.fn(),
 };
 
+class TestResizeObserver implements ResizeObserver {
+  private callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+
+  observe(target: Element): void {
+    this.callback(
+      [
+        {
+          target,
+          contentRect: DOMRectReadOnly.fromRect({
+            width: 640,
+            height: 256,
+          }),
+        } as ResizeObserverEntry,
+      ],
+      this,
+    );
+  }
+
+  unobserve(): void {}
+
+  disconnect(): void {}
+}
+
+beforeEach(() => {
+  vi.stubGlobal("ResizeObserver", TestResizeObserver);
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+    DOMRect.fromRect({ width: 640, height: 256 }),
+  );
+});
+
 afterEach(() => {
   routerPush.mockReset();
   window.history.replaceState(null, "", "/");
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("ResourceView", () => {
@@ -233,7 +268,7 @@ describe("ResourceView", () => {
     expect(routerPush).not.toHaveBeenCalled();
   });
 
-  it("renders a custom resource page with actions and sections", () => {
+  it("renders a custom resource page with actions and sections", async () => {
     const customSchema: CustomResourcePage = {
       uiType: "custom",
       type: "view",
@@ -310,9 +345,11 @@ describe("ResourceView", () => {
     expect(screen.getByText("Posts")).toBeTruthy();
     expect(screen.getByText("25")).toBeTruthy();
     expect(screen.getByText("Views")).toBeTruthy();
-    expect(screen.getByText("views")).toBeTruthy();
-    expect(screen.getByText("Reads")).toBeTruthy();
-    expect(screen.getByText("Shares")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("views")).toBeTruthy();
+      expect(screen.getByText("Reads")).toBeTruthy();
+      expect(screen.getByText("Shares")).toBeTruthy();
+    });
     expect(screen.getByText("Review pending posts before publishing.")).toBeTruthy();
   });
 });
