@@ -66,6 +66,39 @@ type Post struct {
 - `uischema:` — RJSF widget selection, e.g. `uischema:"widget=ForeignKey;ui:options:resource=authors"`.
 - `validate:` — server-side validation (`go-playground/validator`); failures return 422 with per-field messages.
 
+Custom pages are registered alongside CRUD resources when a resource is not a
+table or form:
+
+```go
+reg.Register(admin.NewCustomResourcePage(admin.CustomResourceConfig{
+    ID:   "dashboard",
+    Name: "Dashboard",
+    Icon: "layout-dashboard",
+    Page: admin.CustomResourcePage{
+        ActionButtons: []admin.ActionButton{{
+            Type: admin.ButtonSecondary, Label: "Open Posts", Icon: "file-text",
+            Behavior: admin.BehaviorNavigate, ActionType: admin.ActionView,
+            OnClick: "/admin/posts",
+        }},
+        Sections: []admin.CustomPageSection{
+            {
+                Type: admin.CustomPageSectionStatistics,
+                Statistics: []admin.Statistic{{Label: "Published posts", Value: 17}},
+            },
+            {
+                Type: admin.CustomPageSectionCharts,
+                Children: []admin.Chart{{
+                    Type: admin.ChartTypeBar,
+                    Data: []map[string]any{{"day": "Mon", "views": 320}},
+                    XKey: "day", YKey: "views",
+                }},
+            },
+            {Type: admin.CustomPageSectionText, Body: "Operational notes"},
+        },
+    },
+}))
+```
+
 ## Next.js: mount the UI
 
 Three small files in your app (see `examples/web`):

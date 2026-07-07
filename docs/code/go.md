@@ -31,6 +31,8 @@ Important constructors and helpers:
 - `NewResource[T](cfg, opts...)`: builds a generic CRUD-backed resource.
 - `NewFormResource(cfg)`: builds a form-only / custom-action resource from
   handler closures (see below).
+- `NewCustomResourcePage(cfg)`: builds a custom page resource with action
+  buttons plus chart, statistics, and text sections.
 - `FormSchemaFromModel`, `SubmitButton`: helpers for building form schemas.
 - `Detail`, `Paginated`, `SearchResults`: build the three action response
   shapes.
@@ -41,6 +43,55 @@ Important constructors and helpers:
 
 Core actions are represented by `ActionType`: `view`, `edit`, `delete`,
 `create`, `search`, and `export`.
+
+### Custom page resources (`NewCustomResourcePage`)
+
+Use `NewCustomResourcePage` for dashboard-like pages that are not a CRUD table
+or form. The page schema supports top-level action buttons and three section
+types: `charts`, `statistics`, and `text`. Chart sections support `bar` and
+`line` charts.
+
+```go
+reg.Register(admin.NewCustomResourcePage(admin.CustomResourceConfig{
+    ID:   "dashboard",
+    Name: "Dashboard",
+    Icon: "layout-dashboard",
+    Page: admin.CustomResourcePage{
+        ActionButtons: []admin.ActionButton{{
+            Type: admin.ButtonSecondary, Label: "Open Posts", Icon: "file-text",
+            Behavior: admin.BehaviorNavigate, ActionType: admin.ActionView,
+            OnClick: "/admin/posts",
+        }},
+        Sections: []admin.CustomPageSection{
+            {
+                Type: admin.CustomPageSectionStatistics,
+                Title: "Overview",
+                Statistics: []admin.Statistic{
+                    {Label: "Published posts", Value: 17, Trend: "+12%", Tone: "positive"},
+                },
+            },
+            {
+                Type: admin.CustomPageSectionCharts,
+                Title: "Traffic",
+                Children: []admin.Chart{{
+                    Type: admin.ChartTypeBar,
+                    Data: []map[string]any{
+                        {"day": "Mon", "views": 320},
+                        {"day": "Tue", "views": 540},
+                    },
+                    XKey: "day",
+                    YKey: "views",
+                }},
+            },
+            {Type: admin.CustomPageSectionText, Title: "Notes", Body: "Review drafts weekly."},
+        },
+    },
+}))
+```
+
+For server-side button actions, set an `ActionType` on the button and provide a
+matching `Actions` handler in `CustomResourceConfig`. If a button has no
+`OnClick`, the resource fills the default action URL automatically.
 
 ### Form-only / custom-action resources (`NewFormResource`)
 

@@ -86,6 +86,47 @@ Create and edit schemas have `uiType: "form"`, a JSON Schema payload, an RJSF
 }
 ```
 
+Custom page schemas have `uiType: "custom"`, top-level action buttons, and
+ordered sections:
+
+```json
+{
+  "uiType": "custom",
+  "type": "view",
+  "actionButtons": [
+    {
+      "type": "secondary",
+      "label": "Open Posts",
+      "icon": "file-text",
+      "behavior": "navigate",
+      "actionType": "view",
+      "onClick": "/admin/posts"
+    }
+  ],
+  "sections": [
+    {
+      "type": "statistics",
+      "title": "Overview",
+      "statistics": [{ "label": "Published posts", "value": 17 }]
+    },
+    {
+      "type": "charts",
+      "title": "Traffic",
+      "children": [
+        {
+          "type": "bar",
+          "title": "Views",
+          "data": [{ "day": "Mon", "views": 320 }],
+          "xKey": "day",
+          "yKey": "views"
+        }
+      ]
+    },
+    { "type": "text", "body": "Operational notes" }
+  ]
+}
+```
+
 ## Action Responses
 
 `ActionResponse` is one of three wire shapes:

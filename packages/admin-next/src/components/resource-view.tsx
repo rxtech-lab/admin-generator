@@ -12,10 +12,16 @@ import type {
   ResourceSchema,
   TableColumn,
 } from "../types.js";
-import { isFormSchema, isPaginated, isTableSchema } from "../types.js";
+import {
+  isCustomResourcePage,
+  isFormSchema,
+  isPaginated,
+  isTableSchema,
+} from "../types.js";
 import type { AdminActions } from "../server/actions.js";
 import { ResourceTable } from "./resource-table.js";
 import { ResourceForm } from "./resource-form.js";
+import { CustomResourcePageView } from "./custom-resource-page.js";
 import { CellRenderer } from "./cell-renderer.js";
 import { Sheet } from "./sheet.js";
 import { Button } from "./ui.js";
@@ -27,6 +33,7 @@ export interface ResourceViewProps {
   action: ActionType;
   dynamicPath?: string;
   schema: ResourceSchema;
+  initialPageUrl?: string;
   initialData?: PaginatedResponse;
   initialDetail?: DetailResponse;
   actions: AdminActions;
@@ -40,24 +47,71 @@ interface SheetState {
 export function ResourceView(props: ResourceViewProps): React.JSX.Element {
   const { resource, resourceId, schema, actions } = props;
   const router = useRouter();
+  const initialPageUrl =
+    props.initialPageUrl ??
+    resource?.dataUrl ??
+    `${props.basePath}/resources/${encodeURIComponent(resourceId)}/action?action=view`;
   const [data, setData] = React.useState<PaginatedResponse | undefined>(
     props.initialData,
   );
+  const [currentPageUrl, setCurrentPageUrl] = React.useState(initialPageUrl);
   const [sheet, setSheet] = React.useState<SheetState | null>(null);
   const [pending, setPending] = React.useState(false);
 
-  const refresh = React.useCallback(
-    async (after?: string) => {
+  const fetchPage = React.useCallback(
+    async (url: string, opts: { syncBrowserUrl?: boolean } = {}) => {
       setPending(true);
-      const res = await actions.fetchAction(resourceId, "view", {
-        dynamicPath: props.dynamicPath,
-        after,
-      });
+      const res = await actions.fetchUrl(url);
       setPending(false);
-      if (res.ok && isPaginated(res.data)) setData(res.data);
+      if (res.ok && isPaginated(res.data)) {
+        setData(res.data);
+        setCurrentPageUrl(url);
+        if (opts.syncBrowserUrl) syncPaginationUrl(url);
+      }
     },
-    [actions, resourceId, props.dynamicPath],
+    [actions],
   );
+
+  const refresh = React.useCallback(
+    async () => {
+      await fetchPage(currentPageUrl);
+    },
+    [currentPageUrl, fetchPage],
+  );
+
+  const navigateTo = React.useCallback(
+    (href: string) => {
+      if (/^https?:\/\//i.test(href)) {
+        window.open(href, "_blank", "noopener,noreferrer");
+        return;
+      }
+      router.push(href);
+    },
+    [router],
+  );
+
+  const runPageAction = async (button: ActionButton) => {
+    if (button.behavior === "navigate") {
+      navigateTo(button.onClick);
+      return;
+    }
+    if (
+      button.behavior === "confirmDialog" &&
+      !confirm(`Run ${button.label}?`)
+    ) {
+      return;
+    }
+    setPending(true);
+    const res = await actions.submitAction(
+      resourceId,
+      button.actionType,
+      {},
+      props.dynamicPath,
+    );
+    setPending(false);
+    if (res.ok) router.refresh();
+    else alert(res.error);
+  };
 
   // If the initial schema is a form (deep-linked create/edit), render it inline.
   if (isFormSchema(schema)) {
@@ -79,10 +133,32 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
     );
   }
 
+  if (isCustomResourcePage(schema)) {
+    return (
+      <div>
+        <div className="mb-4">
+          <Header
+            title={resource?.name ?? resourceId}
+            description={resource?.description}
+          />
+        </div>
+        <CustomResourcePageView
+          schema={schema}
+          pending={pending}
+          onAction={runPageAction}
+        />
+      </div>
+    );
+  }
+
   const runRowAction = async (
     button: ActionButton,
     row: Record<string, unknown>,
   ) => {
+    if (button.behavior === "navigate") {
+      navigateTo(button.onClick);
+      return;
+    }
     const dynamicPath = extractDynamicPath(button.onClick);
     if (button.actionType === "edit") {
       setSheet({ action: "edit", dynamicPath });
@@ -132,9 +208,7 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
                   : undefined
               }
               onNavigate={(url) => {
-                const after =
-                  new URL(url, "http://x").searchParams.get("after") ?? undefined;
-                refresh(after);
+                fetchPage(url, { syncBrowserUrl: true });
               }}
               onRowNavigate={(url) => router.push(url)}
             />
@@ -294,4 +368,25 @@ function extractDynamicPath(onClick: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function syncPaginationUrl(pageUrl: string): void {
+  if (typeof window === "undefined") return;
+
+  const source = new URL(pageUrl, window.location.origin);
+  const target = new URL(window.location.href);
+  copySearchParam(source, target, "after");
+  copySearchParam(source, target, "limit");
+
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${target.pathname}${target.search}${target.hash}`,
+  );
+}
+
+function copySearchParam(source: URL, target: URL, name: string): void {
+  const value = source.searchParams.get(name);
+  if (value) target.searchParams.set(name, value);
+  else target.searchParams.delete(name);
 }

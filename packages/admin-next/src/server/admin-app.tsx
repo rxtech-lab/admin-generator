@@ -7,7 +7,7 @@ import type {
   ResourceInfo,
   ResourceSchema,
 } from "../types.js";
-import { isDetail, isPaginated } from "../types.js";
+import { isCustomResourcePage, isDetail, isPaginated } from "../types.js";
 import { AdminShell } from "../components/admin-shell.js";
 import type { AdminActions } from "./actions.js";
 import { clientFor, type ResolvedAdminConfig } from "./config.js";
@@ -39,6 +39,7 @@ interface InitialView {
   action: ActionType;
   dynamicPath?: string;
   schema: ResourceSchema;
+  initialPageUrl?: string;
   initialData?: PaginatedResponse;
   initialDetail?: DetailResponse;
 }
@@ -82,12 +83,31 @@ export async function AdminApp({
       const schema = await client.getSchema(resourceId, action, dynamicPath);
       let initialData: PaginatedResponse | undefined;
       let initialDetail: DetailResponse | undefined;
-      if (action === "view") {
-        const resp = await client.fetchAction(resourceId, "view", { dynamicPath });
+      let initialPageUrl: string | undefined;
+      if (action === "view" && !isCustomResourcePage(schema)) {
+        const pagination = paginationParams(sp);
+        const resp = await client.fetchAction(resourceId, "view", {
+          dynamicPath,
+          ...pagination,
+        });
         if (isPaginated(resp)) initialData = resp;
         else if (isDetail(resp)) initialDetail = resp;
+        if (isPaginated(resp)) {
+          initialPageUrl = resourceActionUrl(config.basePath, resourceId, "view", {
+            dynamicPath,
+            ...pagination,
+          });
+        }
       }
-      initialView = { resourceId, action, dynamicPath, schema, initialData, initialDetail };
+      initialView = {
+        resourceId,
+        action,
+        dynamicPath,
+        schema,
+        initialPageUrl,
+        initialData,
+        initialDetail,
+      };
     } catch (e) {
       error = (e as Error).message;
     }
@@ -117,4 +137,38 @@ export async function AdminApp({
       initialSidebarCollapsed={initialSidebarCollapsed}
     />
   );
+}
+
+function paginationParams(
+  sp: Record<string, string | string[] | undefined>,
+): { after?: string; limit?: number } {
+  const after = firstValue(sp.after);
+  const limit = parsePositiveInt(firstValue(sp.limit));
+  return {
+    ...(after ? { after } : {}),
+    ...(limit ? { limit } : {}),
+  };
+}
+
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parsePositiveInt(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function resourceActionUrl(
+  basePath: string,
+  resourceId: string,
+  action: ActionType,
+  opts: { dynamicPath?: string; after?: string; limit?: number },
+): string {
+  const q = new URLSearchParams({ action });
+  if (opts.dynamicPath) q.set("dynamicPath", opts.dynamicPath);
+  if (opts.after) q.set("after", opts.after);
+  if (opts.limit) q.set("limit", String(opts.limit));
+  return `${basePath}/resources/${encodeURIComponent(resourceId)}/action?${q}`;
 }

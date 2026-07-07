@@ -31,6 +31,7 @@ const (
 	ResourceTable  ResourceType = "table"
 	ResourceDetail ResourceType = "detail"
 	ResourceForm   ResourceType = "form"
+	ResourceCustom ResourceType = "custom"
 )
 
 // ButtonType is the visual style of an action button.
@@ -110,6 +111,70 @@ type FormSchema struct {
 	Schema           *jsonschema.Schema `json:"schema"`
 	UISchema         UISchema           `json:"uiSchema"`
 	SupportedActions []ActionButton     `json:"supportedActions"`
+}
+
+// CustomPageSectionType identifies a section rendered on a custom resource page.
+type CustomPageSectionType string
+
+const (
+	CustomPageSectionCharts     CustomPageSectionType = "charts"
+	CustomPageSectionStatistics CustomPageSectionType = "statistics"
+	CustomPageSectionText       CustomPageSectionType = "text"
+)
+
+// ChartType identifies the supported chart renderers for a charts section.
+type ChartType string
+
+const (
+	ChartTypeBar  ChartType = "bar"
+	ChartTypeLine ChartType = "line"
+)
+
+// ChartSeries describes one numeric series in a chart.
+type ChartSeries struct {
+	Key   string `json:"key"`
+	Label string `json:"label,omitempty"`
+	Color string `json:"color,omitempty"`
+}
+
+// Chart describes a simple bar or line chart. Data items are arbitrary maps;
+// XKey selects the category label and either YKey or Series selects numeric
+// values.
+type Chart struct {
+	Type   ChartType        `json:"type"`
+	Title  string           `json:"title,omitempty"`
+	Data   []map[string]any `json:"data"`
+	XKey   string           `json:"xKey"`
+	YKey   string           `json:"yKey,omitempty"`
+	Series []ChartSeries    `json:"series,omitempty"`
+}
+
+// Statistic describes one metric in a statistics section.
+type Statistic struct {
+	Label       string `json:"label"`
+	Value       any    `json:"value"`
+	Description string `json:"description,omitempty"`
+	Trend       string `json:"trend,omitempty"`
+	Tone        string `json:"tone,omitempty"`
+}
+
+// CustomPageSection is one content block on a custom resource page.
+type CustomPageSection struct {
+	Type        CustomPageSectionType `json:"type"`
+	Title       string                `json:"title,omitempty"`
+	Description string                `json:"description,omitempty"`
+	Children    []Chart               `json:"children,omitempty"`
+	Statistics  []Statistic           `json:"statistics,omitempty"`
+	Body        string                `json:"body,omitempty"`
+}
+
+// CustomResourcePage is the schema for a custom page resource. UIType is always
+// "custom".
+type CustomResourcePage struct {
+	UIType        string              `json:"uiType"`
+	Type          ActionType          `json:"type"`
+	ActionButtons []ActionButton      `json:"actionButtons"`
+	Sections      []CustomPageSection `json:"sections"`
 }
 
 // SearchItem is one result of a search action (ForeignKey / ObjectSearch widgets).

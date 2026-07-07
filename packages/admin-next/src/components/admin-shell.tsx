@@ -25,6 +25,7 @@ export interface AdminShellProps {
     action: ActionType;
     dynamicPath?: string;
     schema: ResourceSchema;
+    initialPageUrl?: string;
     initialData?: PaginatedResponse;
     initialDetail?: DetailResponse;
   };
@@ -186,6 +187,7 @@ export function AdminShell({
                     action={initialView.action}
                     dynamicPath={initialView.dynamicPath}
                     schema={initialView.schema}
+                    initialPageUrl={initialView.initialPageUrl}
                     initialData={initialView.initialData}
                     initialDetail={initialView.initialDetail}
                     actions={actions}
