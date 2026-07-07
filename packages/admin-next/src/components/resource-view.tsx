@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type {
+  ActionResponse,
   ActionButton,
   ActionType,
   DetailResponse,
@@ -14,6 +15,7 @@ import type {
 } from "../types.js";
 import {
   isCustomResourcePage,
+  isDetail,
   isFormSchema,
   isPaginated,
   isTableSchema,
@@ -248,7 +250,21 @@ export function ResourceView(props: ResourceViewProps): React.JSX.Element {
             dynamicPath={sheet.dynamicPath}
             actions={actions}
             onDirtyChange={setSheetHasUnsavedData}
-            onDone={() => {
+            onDone={(response) => {
+              if (sheet.action === "edit" && response && isDetail(response)) {
+                setData((current) =>
+                  current
+                    ? {
+                        ...current,
+                        items: current.items.map((item) =>
+                          item.dynamicPath === sheet.dynamicPath
+                            ? { ...item, data: response.data }
+                            : item,
+                        ),
+                      }
+                    : current,
+                );
+              }
               setSheetHasUnsavedData(false);
               setSheet(null);
               refresh();
@@ -348,7 +364,7 @@ function SheetForm({
   dynamicPath?: string;
   actions: AdminActions;
   onDirtyChange: (dirty: boolean) => void;
-  onDone: () => void;
+  onDone: (response?: ActionResponse) => void;
 }): React.JSX.Element {
   const [schema, setSchema] = React.useState<ResourceSchema | null>(null);
   const [error, setError] = React.useState<string>();

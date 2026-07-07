@@ -8,7 +8,7 @@ import type {
   TemplatesType,
 } from "@rjsf/utils";
 import validator from "@rjsf/validator-ajv8";
-import type { FormSchema } from "../types.js";
+import type { ActionResponse, FormSchema } from "../types.js";
 import { isDetail } from "../types.js";
 import type { AdminActions } from "../server/actions.js";
 import { ForeignKeyWidget } from "./widgets/foreign-key.js";
@@ -82,7 +82,7 @@ export interface ResourceFormProps {
   dynamicPath?: string;
   schema: FormSchema;
   actions: AdminActions;
-  onDone: () => void;
+  onDone: (response?: ActionResponse) => void;
   onDirtyChange?: (dirty: boolean) => void;
 }
 
@@ -149,7 +149,7 @@ export function ResourceForm({
     setSubmitting(false);
     if (res.ok) {
       onDirtyChange?.(false);
-      onDone();
+      onDone(res.data);
       return;
     }
     if (res.fieldErrors) {
