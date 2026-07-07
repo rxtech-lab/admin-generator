@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import Form from "@rjsf/core";
-import type { RegistryWidgetsType } from "@rjsf/utils";
+import type {
+  ErrorListProps,
+  RegistryWidgetsType,
+  TemplatesType,
+} from "@rjsf/utils";
 import validator from "@rjsf/validator-ajv8";
 import type { FormSchema } from "../types.js";
 import { isDetail } from "../types.js";
@@ -30,6 +34,27 @@ const widgets: RegistryWidgetsType = {
   ForeignKey: ForeignKeyWidget,
   // ObjectSearch reuses the ForeignKey combo-search behavior.
   ObjectSearch: ForeignKeyWidget,
+};
+
+/** Clean, shadcn-styled summary of validation errors shown atop the form. */
+function ErrorListTemplate({ errors }: ErrorListProps): React.JSX.Element {
+  return (
+    <div className="ag-error-list" role="alert">
+      <p className="ag-error-list-title">
+        Please fix the following{" "}
+        {errors.length === 1 ? "error" : `${errors.length} errors`}:
+      </p>
+      <ul className="ag-error-list-items">
+        {errors.map((error, i) => (
+          <li key={i}>{error.stack}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const templates: Partial<TemplatesType> = {
+  ErrorListTemplate,
 };
 
 export interface ResourceFormProps {
@@ -108,11 +133,12 @@ export function ResourceForm({
         uiSchema={schema.uiSchema}
         formData={formData}
         widgets={widgets}
+        templates={templates}
         validator={validator}
         extraErrors={extraErrors as never}
         onChange={(e) => setFormData(e.formData as Record<string, unknown>)}
         onSubmit={(e) => submit(e.formData as Record<string, unknown>)}
-        showErrorList={false}
+        showErrorList="top"
       >
         {submitError && (
           <p className="mb-2 text-sm text-destructive">{submitError}</p>

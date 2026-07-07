@@ -153,6 +153,76 @@
   margin: 0.25rem 0 0;
 }
 
+/* Field help text: smaller and muted, sitting under the label. */
+.ag-form .field-description {
+  margin: 0 0 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.ag-form .field-description p {
+  margin: 0;
+}
+
+/* Boolean (checkbox) field: control and label share one aligned row. */
+.ag-form .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.ag-form .checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.ag-form .checkbox.disabled label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ag-form .checkbox .field-description {
+  margin-bottom: 0.375rem;
+}
+
+/* Validation error summary at the top of the form. */
+.ag-form .ag-error-list {
+  margin-bottom: 1rem;
+  border: 1px solid var(--destructive);
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--destructive) 8%, var(--background));
+  padding: 0.75rem 0.875rem;
+}
+
+.ag-form .ag-error-list-title {
+  margin: 0 0 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--destructive);
+}
+
+.ag-form .ag-error-list-items {
+  margin: 0;
+  padding-left: 1rem;
+  list-style: disc;
+}
+
+.ag-form .ag-error-list-items li {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--destructive);
+}
+
 .ag-sheet-overlay[data-state="open"] {
   animation: ag-sheet-overlay-in 160ms ease-out;
 }
