@@ -22,27 +22,64 @@ import {
 } from "./array-templates.js";
 import { Button } from "./ui.js";
 
-/** Keep only the keys declared in the form schema's `properties`. */
+type SchemaNode = {
+  type?: string | string[];
+  properties?: Record<string, SchemaNode>;
+  items?: SchemaNode;
+  dependencies?: Record<string, SchemaNode | string[]>;
+  oneOf?: SchemaNode[];
+  anyOf?: SchemaNode[];
+  allOf?: SchemaNode[];
+  if?: SchemaNode;
+  then?: SchemaNode;
+  else?: SchemaNode;
+};
+
+/**
+ * Collect every property key a schema can hold, including keys declared in
+ * conditional draft-07 branches. RJSF resolves these branches at render time,
+ * so edit-prefill filtering must account for them before handing over data.
+ */
+function collectSchemaKeys(
+  schema: SchemaNode,
+  keys = new Set<string>(),
+  seen = new Set<SchemaNode>(),
+): Set<string> {
+  if (seen.has(schema)) return keys;
+  seen.add(schema);
+
+  for (const key of Object.keys(schema.properties ?? {})) keys.add(key);
+
+  for (const branch of [schema.if, schema.then, schema.else]) {
+    if (branch) collectSchemaKeys(branch, keys, seen);
+  }
+  for (const branches of [schema.oneOf, schema.anyOf, schema.allOf]) {
+    for (const branch of branches ?? []) {
+      collectSchemaKeys(branch, keys, seen);
+    }
+  }
+  for (const dependency of Object.values(schema.dependencies ?? {})) {
+    if (!Array.isArray(dependency)) {
+      collectSchemaKeys(dependency, keys, seen);
+    }
+  }
+
+  return keys;
+}
+
+/** Keep only the keys the form schema can hold (declared or conditional). */
 function pickSchemaKeys(
   data: Record<string, unknown>,
   schema: FormSchema,
 ): Record<string, unknown> {
-  const properties = (schema.schema as { properties?: Record<string, unknown> })
-    .properties;
-  if (!properties) return data;
-  const allowed = new Set(Object.keys(properties));
+  const allowed = collectSchemaKeys(schema.schema as SchemaNode);
+  if (allowed.size === 0) return data;
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (allowed.has(key)) out[key] = value;
   }
   return out;
 }
-
-type SchemaNode = {
-  type?: string | string[];
-  properties?: Record<string, SchemaNode>;
-  items?: SchemaNode;
-};
 
 function normalizeFormDataForSchema(
   data: Record<string, unknown>,
