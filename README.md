@@ -14,6 +14,7 @@ catch-all route — no per-resource frontend code.
 
 - **Go module** — `github.com/rxtech-lab/admin-generator`
 - **npm package** — `@rxtech-lab/admin-generator-next`
+- **Auth.js package** — `@rxtech-lab/authjs-rxlab`
 
 ## Repository layout
 
@@ -26,6 +27,7 @@ catch-all route — no per-resource frontend code.
 | `datasource/gormds/`   | GORM adapter (`DataSource`)                                                                       |
 | `datasource/memory/`   | In-memory adapter for tests/demos                                                                 |
 | `packages/admin-next/` | The npm package (React 19 / Next 15, RJSF forms, shadcn-style theme)                              |
+| `packages/authjs-rxlab/` | Auth.js v5 configuration for RxLab OIDC sessions and refresh-token rotation                    |
 | `examples/server/`     | Runnable Go demo (SQLite, seeded Authors + Posts)                                                 |
 | `examples/web/`        | Runnable Next.js demo consuming the package                                                       |
 
@@ -143,10 +145,22 @@ adminhttp.New(reg, adminhttp.WithAuthenticator(auth))
 
 Gate resources on app-scoped roles with `oidc.RequireRole("admin")`.
 
-**Frontend** — use Auth.js's generic OIDC provider (`issuer: "https://auth.rxlab.app"`,
-PKCE + state), store the access token on the session, and return it from
-`getToken`. A client must be pre-registered in the rxlab-auth dashboard with your
-redirect URI and allowed scopes.
+**Frontend** — use `@rxtech-lab/authjs-rxlab` to configure Auth.js with the
+RxLab OIDC provider, refresh-token rotation, session access tokens, and
+app-scoped roles:
+
+```ts
+import { createRxLabAuth } from "@rxtech-lab/authjs-rxlab";
+
+export const { handlers, signIn, signOut, auth } = createRxLabAuth({
+  issuer: process.env.AUTH_ISSUER!,
+  clientId: process.env.AUTH_CLIENT_ID!,
+  clientSecret: process.env.AUTH_CLIENT_SECRET!,
+});
+```
+
+A client must be pre-registered in the rxlab-auth dashboard with the Auth.js
+callback URI and the `openid email profile offline_access` scopes.
 
 ## Run the demo
 
@@ -164,17 +178,24 @@ cd examples/web && bun run dev
 
 ```bash
 go test ./...                                   # Go core
-bun run --filter '@rxtech-lab/admin-generator-next' test  # package tests
-bun run --filter '@rxtech-lab/admin-generator-next' build # package build
+bun run test                                    # npm package tests
+bun run build                                   # npm package builds
+bun run --filter '@rxtech-lab/*' typecheck      # npm package types
 ```
 
 ## Publishing
 
-- **npm** — add a changeset (`bun run changeset`); merging to `main` opens a
-  Version Packages PR, and merging that publishes `@rxtech-lab/admin-generator-next` with
-  provenance (needs `NPM_TOKEN`).
+- **npm** — manually run the `Create Release` workflow. Semantic-release creates
+  a versioned GitHub Release from conventional commits; `release.yml` then
+  builds, tests, stamps, and publishes both npm packages through npm trusted
+  publishing with OIDC.
 - **Go** — tag the repo: `git tag v0.1.0 && git push --tags`, then
   `go get github.com/rxtech-lab/admin-generator@v0.1.0`.
+
+Each npm package must trust `rxtech-lab/admin-generator` and `release.yml` in
+its npm settings. npm requires a package to exist before trusted publishing can
+be configured, so bootstrap a brand-new package once with maintainer
+credentials, configure the trusted publisher, and use CI for later releases.
 
 ## License
 

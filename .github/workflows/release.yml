@@ -25,13 +25,22 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
+      - name: Upgrade npm for trusted publishing
+        run: npm install --global "npm@^11.5.1"
+
       - name: Install
         run: bun install --frozen-lockfile
 
-      - name: Build package
-        run: bun run --filter '@rxtech-lab/admin-generator-next' build
+      - name: Build packages
+        run: bun run build
 
-      # Sets packages/admin-next/package.json to the release tag version, then
-      # publishes to npm through the package's trusted publisher configuration.
-      - name: Publish to NPM
+      - name: Typecheck packages
+        run: bun run --filter '@rxtech-lab/*' typecheck
+
+      - name: Test packages
+        run: bun run test
+
+      # Sets every public package to the release tag version, then publishes
+      # through each package's npm trusted-publisher configuration.
+      - name: Publish packages to NPM
         run: node scripts/publish.js ${{ github.event.release.tag_name }}

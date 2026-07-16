@@ -1,4 +1,4 @@
-const { execSync } = require("child_process");
+const { execSync, spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -11,19 +11,48 @@ if (!version) {
 // Strip any leading "v" so package.json holds a clean semver.
 version = version.replace(/^v/, "");
 
-// The publishable package lives in the monorepo, not the private root.
-const pkgDir = path.join(__dirname, "..", "packages", "admin-next");
-const pkgPath = path.join(pkgDir, "package.json");
+if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+  console.error(`Invalid release version: ${version}`);
+  process.exit(1);
+}
 
-// Set the package version from the release tag.
-const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-pkg.version = version;
-fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
-console.log(`Set ${pkg.name} version to ${version}`);
+// Public packages share the repository's semantic-release version.
+const packageDirectories = ["admin-next", "authjs-rxlab"];
 
-// Publish from the package directory. In GitHub Actions, npm authenticates via
-// the package's trusted publisher OIDC configuration.
-execSync("npm publish --access public", {
-  cwd: pkgDir,
-  stdio: "inherit",
-});
+function isPublished(name, packageVersion) {
+  const result = spawnSync(
+    "npm",
+    ["view", `${name}@${packageVersion}`, "version", "--json"],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  if (result.status !== 0) return false;
+
+  try {
+    return JSON.parse(result.stdout) === packageVersion;
+  } catch {
+    return false;
+  }
+}
+
+for (const directory of packageDirectories) {
+  const pkgDir = path.join(__dirname, "..", "packages", directory);
+  const pkgPath = path.join(pkgDir, "package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+
+  pkg.version = version;
+  fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  console.log(`Set ${pkg.name} version to ${version}`);
+
+  // A release rerun may follow a partial multi-package publish. Skip versions
+  // already present so the remaining package can finish publishing.
+  if (isPublished(pkg.name, version)) {
+    console.log(`${pkg.name}@${version} is already published; skipping`);
+    continue;
+  }
+
+  // In GitHub Actions, npm authenticates via this package's trusted publisher.
+  execSync("npm publish --access public", {
+    cwd: pkgDir,
+    stdio: "inherit",
+  });
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@rxtech-lab/authjs-rxlab",
+  "version": "0.1.0",
+  "description": "Auth.js integration for RxLab OIDC with refresh-token rotation and typed sessions.",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rxtech-lab/admin-generator.git",
+    "directory": "packages/authjs-rxlab"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "next-auth": ">=5.0.0-beta.31 <6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "next": "^15.1.6",
+    "next-auth": "5.0.0-beta.31",
+    "react": "^19.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
