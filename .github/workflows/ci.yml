@@ -29,7 +29,7 @@ jobs:
           version: latest
 
   web:
-    name: Web package
+    name: Web packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -38,12 +38,12 @@ jobs:
           bun-version: latest
       - name: Install
         run: bun install --frozen-lockfile
-      - name: Build package
-        run: bun run --filter '@rxtech-lab/admin-generator-next' build
-      - name: Typecheck
-        run: bun run --filter '@rxtech-lab/admin-generator-next' typecheck
-      - name: Test
-        run: bun run --filter '@rxtech-lab/admin-generator-next' test
+      - name: Build packages
+        run: bun run build
+      - name: Typecheck packages
+        run: bun run --filter '@rxtech-lab/*' typecheck
+      - name: Test packages
+        run: bun run test
       - name: Build example app (RSC / directive regression net)
         run: bun run --filter 'web-example' build
         env:
@@ -62,8 +62,8 @@ jobs:
           bun-version: latest
       - name: Install
         run: bun install --frozen-lockfile
-      - name: Build package
-        run: bun run --filter '@rxtech-lab/admin-generator-next' build
+      - name: Build packages
+        run: bun run build
       - name: Install Playwright browser
         run: bunx playwright install --with-deps chromium
       # Root test:e2e builds the app, then Playwright boots the Go API + Next app.
