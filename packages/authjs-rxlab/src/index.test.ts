@@ -1,4 +1,4 @@
-import type { Account, Profile, Session } from "next-auth";
+import NextAuth, { type Account, type Profile, type Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +12,7 @@ vi.mock("next-auth", () => ({
 }));
 
 import {
+  createRxLabAuth,
   createRxLabAuthConfig,
   RX_LAB_PROVIDER_ID,
   RX_LAB_REFRESH_TOKEN_ERROR,
@@ -35,6 +36,46 @@ function callbacks(options = baseOptions) {
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe("createRxLabAuth", () => {
+  it("exposes a proxy that delegates through Auth.js's response-owning path", async () => {
+    const response = new Response(null, {
+      headers: { "Set-Cookie": "authjs.session-token=rotated" },
+    });
+    const proxyHandler = vi.fn().mockResolvedValue(response);
+    const auth = vi.fn((wrapper?: unknown) =>
+      typeof wrapper === "function" ? proxyHandler : null,
+    );
+    const handlers = { GET: vi.fn(), POST: vi.fn() };
+    const signIn = vi.fn();
+    const signOut = vi.fn();
+    vi.mocked(NextAuth).mockReturnValueOnce({
+      handlers,
+      auth,
+      signIn,
+      signOut,
+      unstable_update: vi.fn(),
+    } as never);
+
+    const result = createRxLabAuth(baseOptions);
+    const request = new Request("https://app.example.com/admin") as Parameters<
+      typeof result.proxy
+    >[0];
+    const event = {} as Parameters<typeof result.proxy>[1];
+
+    const proxyResponse = await result.proxy(request, event);
+
+    expect(auth).toHaveBeenCalledOnce();
+    expect(auth).toHaveBeenCalledWith(expect.any(Function));
+    expect(proxyHandler).toHaveBeenCalledOnce();
+    expect(proxyHandler).toHaveBeenCalledWith(request, event);
+    expect(proxyResponse).toBe(response);
+    expect((proxyResponse as Response).headers.get("set-cookie")).toBe(
+      "authjs.session-token=rotated",
+    );
+    expect(result).toMatchObject({ handlers, auth, signIn, signOut });
+  });
 });
 
 describe("createRxLabAuthConfig", () => {
@@ -180,6 +221,8 @@ describe("createRxLabAuthConfig", () => {
       new Response(
         JSON.stringify({
           error: "invalid_grant",
+          error_description:
+            "Invalid\nrefresh token refresh-one for client-secret and access-one",
           leaked_value: "refresh-one",
         }),
         { status: 401, headers: { "Content-Type": "application/json" } },
@@ -190,7 +233,11 @@ describe("createRxLabAuthConfig", () => {
       fetch: fetchMock,
       logger,
     }).jwt({
-      token: { refreshToken: "refresh-one", expiresAt: 1 },
+      token: {
+        accessToken: "access-one",
+        refreshToken: "refresh-one",
+        expiresAt: 1,
+      },
       trigger: "update",
     });
 
@@ -200,9 +247,14 @@ describe("createRxLabAuthConfig", () => {
       hasRefreshToken: true,
       expiresAt: 1,
       status: 401,
+      oauthError: "invalid_grant",
+      oauthErrorDescription:
+        "Invalid refresh token [redacted] for [redacted] and [redacted]",
     });
     expect(JSON.stringify(logger.mock.calls)).not.toContain("refresh-one");
     expect(JSON.stringify(logger.mock.calls)).not.toContain("client-secret");
+    expect(JSON.stringify(logger.mock.calls)).not.toContain("access-one");
+    expect(JSON.stringify(logger.mock.calls)).not.toContain("leaked_value");
   });
 
   it("projects the access token, identity, roles, and error onto the session", async () => {

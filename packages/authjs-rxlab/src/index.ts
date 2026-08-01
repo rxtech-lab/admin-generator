@@ -2,6 +2,7 @@ import NextAuth, {
   type NextAuthConfig,
   type NextAuthResult,
 } from "next-auth";
+import type { NextMiddleware } from "next/server";
 
 export const RX_LAB_PROVIDER_ID = "rxlab";
 export const RX_LAB_REFRESH_TOKEN_ERROR = "RefreshTokenError";
@@ -18,6 +19,8 @@ export interface RxLabAuthLogEntry {
   hasRefreshToken: boolean;
   expiresAt: number | null;
   status?: number;
+  oauthError?: string;
+  oauthErrorDescription?: string;
 }
 
 export type RxLabAuthLogger = (
@@ -62,6 +65,22 @@ interface RxLabJWTFields {
   error?: string;
 }
 
+interface RxLabRefreshError extends Error {
+  status: number;
+  oauthError?: string;
+  oauthErrorDescription?: string;
+}
+
+export type RxLabAuthProxy = NextMiddleware;
+
+export interface RxLabAuthResult extends NextAuthResult {
+  /**
+   * Response-owning Auth.js handler that persists rotated refresh tokens.
+   * Export this as the default handler from the application's `proxy.ts`.
+   */
+  proxy: RxLabAuthProxy;
+}
+
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
@@ -89,6 +108,31 @@ function isTokenResponse(value: unknown): value is RxLabTokenResponse {
   return (
     typeof token.access_token === "string" &&
     typeof token.expires_in === "number"
+  );
+}
+
+function sanitizeOAuthErrorField(
+  value: unknown,
+  sensitiveValues: readonly (string | undefined)[],
+): string | undefined {
+  if (typeof value !== "string") return undefined;
+
+  let sanitized = value.replace(/[\u0000-\u001f\u007f]/g, " ").trim();
+  for (const sensitiveValue of sensitiveValues) {
+    if (sensitiveValue) {
+      sanitized = sanitized.replaceAll(sensitiveValue, "[redacted]");
+    }
+  }
+
+  sanitized = sanitized.replace(/\s+/g, " ").slice(0, 256);
+  return sanitized || undefined;
+}
+
+function tokenValuesFromResponse(body: unknown): (string | undefined)[] {
+  if (!body || typeof body !== "object") return [];
+  const response = body as Record<string, unknown>;
+  return ["access_token", "refresh_token", "id_token"].map((key) =>
+    typeof response[key] === "string" ? response[key] : undefined,
   );
 }
 
@@ -130,7 +174,10 @@ export function createRxLabAuthConfig(
     throw new TypeError("A fetch implementation is required");
   }
 
-  async function refreshAccessToken(refreshToken: string) {
+  async function refreshAccessToken(
+    refreshToken: string,
+    accessToken: string | undefined,
+  ) {
     const response = await fetchImpl(`${issuer}/api/oauth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -150,8 +197,28 @@ export function createRxLabAuthConfig(
     }
 
     if (!response.ok || !isTokenResponse(body)) {
-      const error = new Error(`RxLab token refresh failed (${response.status})`);
-      Object.assign(error, { status: response.status });
+      const responseBody =
+        body && typeof body === "object"
+          ? (body as Record<string, unknown>)
+          : undefined;
+      const sensitiveValues = [
+        refreshToken,
+        accessToken,
+        clientSecret,
+        ...tokenValuesFromResponse(body),
+      ];
+      const error = new Error(
+        `RxLab token refresh failed (${response.status})`,
+      ) as RxLabRefreshError;
+      error.status = response.status;
+      error.oauthError = sanitizeOAuthErrorField(
+        responseBody?.error,
+        sensitiveValues,
+      );
+      error.oauthErrorDescription = sanitizeOAuthErrorField(
+        responseBody?.error_description,
+        sensitiveValues,
+      );
       throw error;
     }
 
@@ -233,7 +300,10 @@ export function createRxLabAuthConfig(
         }
 
         try {
-          const fresh = await refreshAccessToken(rxLabToken.refreshToken);
+          const fresh = await refreshAccessToken(
+            rxLabToken.refreshToken,
+            rxLabToken.accessToken,
+          );
           logger?.("debug", {
             event: "refresh-succeeded",
             hasRefreshToken: true,
@@ -253,11 +323,27 @@ export function createRxLabAuthConfig(
             typeof error.status === "number"
               ? error.status
               : undefined;
+          const oauthError =
+            error instanceof Error &&
+            "oauthError" in error &&
+            typeof error.oauthError === "string"
+              ? error.oauthError
+              : undefined;
+          const oauthErrorDescription =
+            error instanceof Error &&
+            "oauthErrorDescription" in error &&
+            typeof error.oauthErrorDescription === "string"
+              ? error.oauthErrorDescription
+              : undefined;
           logger?.("error", {
             event: "refresh-failed",
             hasRefreshToken: true,
             expiresAt: rxLabToken.expiresAt ?? null,
             ...(status === undefined ? {} : { status }),
+            ...(oauthError === undefined ? {} : { oauthError }),
+            ...(oauthErrorDescription === undefined
+              ? {}
+              : { oauthErrorDescription }),
           });
           return { ...rest, error: RX_LAB_REFRESH_TOKEN_ERROR };
         }
@@ -285,6 +371,14 @@ export function createRxLabAuthConfig(
 }
 
 /** Create the complete Auth.js result used by route handlers and applications. */
-export function createRxLabAuth(options: RxLabAuthOptions): NextAuthResult {
-  return NextAuth(createRxLabAuthConfig(options));
+export function createRxLabAuth(options: RxLabAuthOptions): RxLabAuthResult {
+  const result = NextAuth(createRxLabAuthConfig(options));
+  const continueRequest: NextMiddleware = () => undefined;
+
+  return {
+    ...result,
+    // Wrapping Auth.js forces its request/response path, which forwards the
+    // refreshed session's Set-Cookie header to the browser.
+    proxy: result.auth(continueRequest),
+  };
 }
