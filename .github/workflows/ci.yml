@@ -64,8 +64,13 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Build packages
         run: bun run build
+      # Run from examples/web so bunx resolves the workspace-pinned @playwright/test
+      # CLI. At the repo root there is no local playwright binary, so bunx would
+      # fetch the latest from npm and install a browser build the pinned runner
+      # does not look for.
       - name: Install Playwright browser
         run: bunx playwright install --with-deps chromium
+        working-directory: examples/web
       # Root test:e2e builds the app, then Playwright boots the Go API + Next app.
       - name: Run e2e
         run: bun run test:e2e
