@@ -20,6 +20,6 @@ jobs:
       # `release: released` event that triggers release.yml — a GITHUB_TOKEN
       # release would not trigger downstream workflows.
       - name: Create Release
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
